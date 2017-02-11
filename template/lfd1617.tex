@@ -1,0 +1,86 @@
+%
+% File lfd1617.tex
+%
+%% Based on the style files for EACL-2017
+%% Based on the style files for ACL-2016
+%% Based on the style files for ACL-2015, with some improvements
+%%  taken from the NAACL-2016 style
+%% Based on the style files for ACL-2014, which were, in turn,
+%% Based on the style files for ACL-2013, which were, in turn,
+%% Based on the style files for ACL-2012, which were, in turn,
+%% based on the style files for ACL-2011, which were, in turn, 
+%% based on the style files for ACL-2010, which were, in turn, 
+%% based on the style files for ACL-IJCNLP-2009, which were, in turn,
+%% based on the style files for EACL-2009 and IJCNLP-2008...
+
+%% Based on the style files for EACL 2006 by 
+%%e.agirre@ehu.es or Sergi.Balari@uab.es
+%% and that of ACL 08 by Joakim Nivre and Noah Smith
+
+\documentclass[11pt]{article}
+\usepackage{eacl2017}
+\usepackage{times}
+\usepackage{url}
+\usepackage{latexsym}
+
+
+%%%% LEAVE THIS IN
+\eaclfinalcopy
+
+
+\newcommand\BibTeX{B{\sc ib}\TeX}
+
+
+
+\title{Template for LfD 2016-2017 Reports -- Your title goes here}
+
+\author{First Author \\
+  Affiliation / Address line 1 \\
+  Affiliation / Address line 2 \\
+  Affiliation / Address line 3 \\
+  {\tt email@domain}}
+
+\date{}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+ For the weekly reports you might not need this, but it's good to get used soon to writing proper abstracts to research papers. Give it a try, and we will provide feedback.
+ \end{abstract}
+
+
+
+\section{Introduction}
+
+ The template is structured along the lines of a research paper, and you can fill each appropriate section with the relevant information. The idea is that you get used to using the standard format adopted in research to report on experiments. At times this might feel a little stretched in the context of homework and the exercises you are asked to complete, but give it a try. Also, don't get too hung up about what should go where: try make decisions, and we will give you feedback. Finally, for spefific assignments you might want to implement some modifications to the template (for example in case you don't have a separate test set, or you might want to have a more general ``Experiments'' section in case you have to run more than one, and stuff like that). Feel free to do so, as long as you maintain some proper structure which is appropriate for a research paper. Additional questions can be answered in the final section.
+
+\section{Related Work}
+
+For the reports you probably don't need this, but in case you want to mention some background or motivate some choices that you made based on the existing literature, this is the place to do it.
+
+\section{Data}
+
+Here you will report on what data you used.  How much is it?  Where did it come from? Is it annotated? Do you know anything about inter-annotator agreement?
+
+\section{Method/Approach}
+
+Here you will report on method you chose to run your experiments. Also evaluation methods can go here.
+Any settings you used also can be described here. Do you have a separate dev set? Do you use cross-validation? What features are you using?
+
+\section{Results}
+
+Your final results on test data. You can also include here some results on development, of course, but you should keep them clearly separate from results on test data. Results on development are useful to tune your system, so they better go in Method. But for comparison you might want to report your best dev results also in this section. It can happen that for some assignments you have no separate test set, so this section in case can be merged with the previous one.
+
+\section{Discussion/Conclusion}
+
+What observations can you glean from the results? In the context of the course, you can really use this space not only to discuss the actual results with your own observations, but also to add some reflections on what you had to do, strategies you adopted, what you could do differently, and so on.
+
+\section{Answers to additional questions}
+
+If something doesn't fit in the above, or if there are additional, more general questions in the assignment that are not directly answered in the previous sections, you can use this space for them.
+
+
+\bibliography{eacl2017}
+\bibliography{yourbibfile}
+
+\end{document}
