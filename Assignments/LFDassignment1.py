@@ -3,7 +3,7 @@ import argparse
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import Pipeline
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import classification_report, confusion_matrix
 
 parser = argparse.ArgumentParser(
     prog='naive bayes classifier',
@@ -16,7 +16,7 @@ parser.add_argument(
     dest='use_sentiment',
     help='boolean to select the use of sentiment labels',
     metavar='use sentiment',
-    choices=['true', 'false']
+    choices=[True, False]
 )
 
 args = parser.parse_args()
@@ -82,8 +82,8 @@ classifier.fit(documentsTrain, labelsTrain)
 # Performs classification on the vecorization of the documents in the test set.
 labelsGuess = classifier.predict(documentsTest)
 
-# Prints the accuracy score of the predicted labels compares to the labels in the test set.
-# The accuracy score is the fraction of correct predictions with respect to all predictions;
-# in multilabel classification it prints the subclass accuracy.
-print(accuracy_score(labelsTest, labelsGuess))
+# Prints a report containing the f-score, precision, recall and number of supporting instances
+print(classification_report(labelsTest, labelsGuess))
+# Prints the confusion matrix
+print(confusion_matrix(labelsTest, labelsGuess))
 
