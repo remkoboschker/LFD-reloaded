@@ -87,3 +87,5 @@ print(classification_report(labelsTest, labelsGuess))
 # Prints the confusion matrix
 print(confusion_matrix(labelsTest, labelsGuess))
 
+print(classifier.predict_proba(documentsTest[:10]))
+
