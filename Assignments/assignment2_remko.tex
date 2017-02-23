@@ -168,9 +168,9 @@ It would seem that the reviews contains words that are more specific to the topi
 
 \item decision tree theory
 
-To build the decision tree for the given example with the least amount of nodes you need to split on the test with the highest information gain first. Information gain is the expected reduction in entropy for the \emph{edible} label in the example for sorting on either the \emph{color}, \emph{size} or \emph{shape} labels. The information gain is calculated by calculating the entropy for the parent set and subtracting the weighted average entropy of the child sets resulting from splitting on the label. The entropy of a set is calculated by $\sum\limits_i - p_i \log_2 p_i $ where $p_i$ is the probability of an element being in class \emph{i} modeled as the portion of the elements in the set being of class \emph{i}.
+To build the decision tree for the given example with the least amount of nodes you need to branch on the test with the highest information gain first. Information gain is the expected reduction in entropy for the \emph{edible} label in the example for sorting on either the \emph{color}, \emph{size} or \emph{shape} labels. The information gain is calculated by calculating the entropy for the parent set and subtracting the weighted average entropy of the child sets resulting from splitting on the label. The entropy of a set is calculated by $\sum\limits_i - p_i \log_2 p_i $ where $p_i$ is the probability of an element being in class \emph{i} modeled as the portion of the elements in the set being of class \emph{i}. The information gain achieved by sorting on the \emph{colour, size or shape} features is listed in table~\ref{tab:gain}. Sorting on the \emph{size} first achieves the highest gain and therefore this is what should be done first.
 
-\begin{table}[h]
+\begin{table}[h]\footnotesize
 \label{tab:gain}
 \begin{tabular}{ l r r r r r }
 & \multicolumn{4}{c}{entropy} & \\
@@ -185,11 +185,8 @@ shape & 0.9886 & 1 & 0.8112 & 0.9528 & 0.0358 \\
 \end{table}
 
 
-For the first splitting test the information gain works out as can be seen in the table~\ref{tab:gain}. This means we should first split on the \emph{size} label.
 
-repeating for small and for large
-
-\begin{table}[h]
+\begin{table}[h]\footnotesize
 \label{tab:gain-small}
 \begin{tabular}{ l r r r r r }
 & \multicolumn{4}{c}{entropy} & \\
@@ -202,7 +199,7 @@ shape & 0.8112 & 0.9182 & 0 & 0.6887 & 0.1225 \\
 \caption{information gain on the \emph{small} branch with respect to the edible label}
 \end{table}
 
-\begin{table}[h]
+\begin{table}[h]\footnotesize
 \label{tab:gain-large}
 \begin{tabular}{ l r r r r r }
 & \multicolumn{4}{c}{entropy} & \\
