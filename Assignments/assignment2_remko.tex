@@ -44,24 +44,19 @@
 \begin{document}
 \maketitle
 \begin{abstract}
-This experiment uses a naive Bayes classifier on a tf-idf vector representation of a corpus of six thousand product reviews achieving an average f-score of 0.78 on predicting whether the review was positive of negative and an average f-score of 0.91 on predicting if the review was on one of six topics.
+This study compares the performance of naive Bayes, decision tree and k-nearest neighbour classification of a corpus of reviews by topic.
 \end{abstract}
-
-
 
 \section{Introduction}
 
-This experiment uses a naive Bayes classifier to predict if a review is either possitive or negative and to predict to which topic the review belongs. The predictions will be made on the basis of word frequencies in the review text.
-
-\section{Related Work}
-
--
+This study attempts to find the best way to classify reviews by topic. I will analyse the performance of three methods and for each method I will try to find the optimal parameter settings. The methods are naive Bayes, decision tree and k-nearest neighbour classification. I will also analyse what representation of the documents gives the best performance. The representations I want to try are a vector containing the term frequency - inverse document frequency statistic for each word in the document and a sparse matrix containing per document all the counts for all the words in the corpus. For both the vectorisations I will experiment with lemmatisation of the input words and with a stop word list.
 
 \section{Data}
 
-The experiment uses a corpus six thousand product reviews. Each review consists of a label indicating whether the review is possitive or negative and a label indicating to which of the followings six topics it belongs: books, camera, dvd, health, music or software. The review also contains a file reference and the actual text of the review.
+The study uses a corpus of six thousand product reviews. Each review consists of a label indicating whether the review is positive or negative and a label indicating to which of the followings six topics it belongs: books, camera, dvd, health, music or software. The review also contains a file reference and the actual text of the review. The topic and sentiment labels are distributed almost equally across the corpus. About half of the reviews about a particular topic are labeled positive. Table ~\ref{tab:corpus} shows the counts for the labels in the corpus.
 
 \begin{table}[h]\footnotesize
+\label{tab:corpus}
 \begin{tabular}{ l r r r r r r }
 topic & cnt & \% & pos & \% & neg & \% \\
 \hline
@@ -74,93 +69,24 @@ camera & 988 & 16.5 & 504 & 51 & 484 & 49 \\
 \hline
 total & 6000 & 100.0 & 2968 & 48 & 3132 & 52 \\
 \end{tabular}
-\caption{counts of topic and sentiment}
+\caption{counts of topic and sentiment labels}
 \end{table}
-
-Each topic is included in the corpus more or less equally $\pm 0.5 \%$ as is the positive and negative sentiment within a topic and in total $\pm 3 \%$ as you can see in table \reftable{1}.
 
 \section{Method/Approach}
 
-The experiment uses the Python Scikit Learn module. The review texts are converted to a vector representaton using the term frequency - inverse document frequency statistic for each word in the document. This statistic is proportional to how ofter a word occurs in the document, but it is inversely proportional to how often the word occurs in the whole corpus to take into account words that simply occur very often without them being specially relevant for the document in question. The dataset is split into three quarters of the review used for training and one quarter used for evaluation.
+This study compares the performance of the Scikit-learn implementations of three classification algorithms on eight different representations of the documents that need to be classified. The eight representations are generated using either the TF-IDF or Count vectoriser from the Scikit-learn Python library. Both vectorisers can be used with or without lemmatisation or the default stop word list for English included with the library. The Python NLTK toolkit performs the lemmatisation by POS tagging and then using the Wordnet Lemmatizer. I measure the performance in terms of precision, accuracy and the time it takes to train and test the models using cross-validation on one quarter of the corpus at a time.
 
-Next the experiment uses the Scikit naive Bayes classifier for multinomially distributed data to build a probability model for the training data. The classifier then uses this model to predict the label for a review in the test data selecting the label with the maximum log likelihood. This is called the maximum a posteriori (MAP) decision rule. The experiment is run using the sentiment labels and using the topic labels.
+The combinations I listed lead to a total of twenty-four experiments. I also want to improve performance by tuning the parameters of the classification algorithms. This would lead to even more combinations. I limit the number of experiments by first testing what representation works best for each of the three algorithms using the default settings and then tuning the parameters of each algorithm using the best performing representation.
+
+\section{Optimising Representations}
+
+\section{Tuning Classification Algorithm Parameters}
 
 \section{Results}
 
-The experiment was run twice. Once fitting the classifier for the topic labels and predicting them for the test set and once for the sentiment labels. The results for both experiments can be found in tables \reftable{2} and \reftable{3} respectively.
-
-topics
-\begin{table}[h]
-\begin{tabular}{ l r r r r }
-label & precision & recall & f1-score & support \\
-\hline
-books & 0.94 & 0.91 & 0.93 & 233 \\
-camera & 0.83 & 0.94 & 0.88 & 258 \\
-dvd & 0.88 & 0.91 & 0.89 & 242 \\
-health & 0.97 & 0.79 & 0.87 & 243 \\
-music & 0.96 & 0.95 & 0.95 & 260 \\
-software & 0.89 & 0.93 & 0.91 & 264 \\
-\hline
-avg / total & 0.91 & 0.91 & 0.91 & 1500 \\
-\end{tabular}
-\caption{scores for predicting the topic labels}
-\end{table}
-
-\begin{table}[h]
-\begin{tabular}{ l r r r r }
-label & precision & recall & f1-score & support \\
-\hline
-neg & 0.71 & 0.93 & 0.81 & 731 \\
-pos & 0.91 & 0.64 & 0.75 & 769 \\
-\hline
-avg / total & 0.81 & 0.78 & 0.78 & 1500
-\end{tabular}
-\caption{scores for predicting the sentiment labels}
-\end{table}
-
-The scores are higher for the multi-class classification task. Although the prediction of positive sentiment labels has a high accuracy, the recall is low and the reverse is the case for the negative sentiment.
-
 \section{Discussion/Conclusion}
 
-\begin{table}[h]
-\begin{tabular}{ l l }
-neg & pos \\
-\hline
-0.338 & 0.661 \\
-0.656 & 0.343 \\
-0.486 & 0.513 \\
-0.358 & 0.641 \\
-0.538 & 0.461 \\
-0.401 & 0.598 \\
-0.498 & 0.501 \\
-0.640 & 0.359 \\
-0.400 & 0.599 \\
-0.750 & 0.249 \\
-\end{tabular}
-\caption{posterior probabilities for the prediction of the sentiment labels of the first ten reviews}
-\end{table}
 
-\begin{table}[h]\footnotesize
-\begin{tabular}{ l l l l l l }
-books & camera & dvd & health & music & software \\
-\hline
-0.544 & 0.041 & 0.241 & 0.037 & 0.088 & 0.045 \\
-0.214 & 0.111 & 0.381 & 0.099 & 0.111 & 0.081 \\
-0.037 & 0.790 & 0.056 & 0.041 & 0.033 & 0.040 \\
-0.088 & 0.060 & 0.606 & 0.039 & 0.143 & 0.061 \\
-0.114 & 0.056 & 0.223 & 0.389 & 0.143 & 0.072 \\
-0.108 & 0.028 & 0.172 & 0.029 & 0.606 & 0.055 \\
-0.035 & 0.782 & 0.040 & 0.059 & 0.040 & 0.040 \\
-0.093 & 0.026 & 0.726 & 0.018 & 0.111 & 0.024 \\
-0.072 & 0.150 & 0.066 & 0.054 & 0.046 & 0.609 \\
-0.075 & 0.484 & 0.112 & 0.120 & 0.074 & 0.133 \\
-\end{tabular}
-\caption{posterior probabilities for the prediction of the sentiment labels of the first ten reviews}
-\end{table}
-
-The prior probabilities for the topic labels are roughly $0.167$ and for the sentiment labels $0.5$. Analyzing the posterior probabilities, a sample of which is shown in tables \reftable{4} and \reftable{5}, indicates that the word frequencies give a clearer prediction of the topic than of the sentiment labels in the sense that the difference between the maximum posterior probability for the correct label and the others is bigger for the predictions of the topic labels than for the sentiment labels, on estimate a value between 0.17 and 0.5 versus a value between 0.01 and 0.3.
-
-It would seem that the reviews contains words that are more specific to the topic than to the sentiment. It could also be that the term frequency inverse document frequency vectorization works against the prediction of the sentiment as in the case of sentiment words with a high frequency in the whole corpus rather might be more relevant for the sentiment prediction although they are less document specific.
 
 \section{Answers to additional questions}
 
@@ -249,25 +175,11 @@ shape & 0.9544 & 1 & 0.9182 & 0.9387 & 0.0157 \\
         child { node {no}
           edge from parent node {irregular}}
         edge from parent node {green}}
-      edge from parent node {large}}
+      edge from parent node {large}};
 \end{tikzpicture}
 \end{figure}
 
 As can be seen in the tables ~\ref{tab:gain-small} and ~\ref{tab:gain-large} for the items labeled \emph{small} the next split with the most gain would be by \emph{shape} and for the items labeled large it would be \emph{colour}. The resulting tree is shown in figure ~\ref{fig:tree}. The leaf for items with the features \emph{yellow,  small, round} has a $\frac{4}{5}$ probability of being edible, but a $\frac{1}{5}$ probability of not being edible. There are no features to distinguish between them. The leaf was labeled with yes, because of the higher probability. The leaf for items with the features \emph{yellow,  large, round} was treated similarly labeling such items as not edible, although there is a $\frac{1}{5}$ probability that the item is edible. There is no item with the features \emph{green, large, round} and no branch for those features is included in the tree.
-
-
-
-\item What happens with cross-validation?
-
-Cross-validation means splitting the data set in a number of segments and using each segment in turn as the test data and the other segments as the training data.
-
-\item What baselines could you use for the binary sentiment classification and for the six- class topic classification? What would be their performance?
-
-Because the topic and sentiment labels are almost distributed equally in the dataset it does not really matter which label you choose to always select for a baseline system. For the binary classification always choosing negative would for predicting the negative sentiment correctly give a precision of 0.52 and a recall of 1 resulting in a f-score of 0.684.
-
-\item What features are used in the classification task you ran?
-
-The features used in the task are the word frequencies in the review text. They are used in a feature vector calculating the tf-idf statistic for each word.
 
 \end{enumerate}
 

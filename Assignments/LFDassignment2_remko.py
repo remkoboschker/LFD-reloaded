@@ -4,11 +4,19 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from nltk.stem import PorterStemmer, WordNetLemmatizer
+from nltk import pos_tag
+
+stemmer = PorterStemmer()
+lemmatiser = WordNetLemmatizer()
 
 parser = argparse.ArgumentParser(
     prog='naive bayes classifier',
     description='classifies reviews by sentiment of topic'
 )
+
 parser.add_argument(
     '--use_sentiment',
     default=False,
@@ -35,7 +43,7 @@ def read_corpus(corpus_file, use_sentiment):
 
             documents.append(tokens[3:])
 
-            if args.use_sentiment:
+            if use_sentiment:
                 # 2-class problem: positive vs negative
                 labels.append( tokens[1] )
             else:
@@ -51,7 +59,7 @@ def identity(x):
 # Calls read corpus with trainset.txt as a filename and using the sentiment labels
 # assigning three quarters of the documents and labels as a training set and one quarter as
 # a test set
-documents, labels = read_corpus('trainset.txt', use_sentiment=True)
+documents, labels = read_corpus('trainset.txt', args.use_sentiment)
 split_point = int(0.75*len(documents))
 documentsTrain = documents[:split_point]
 labelsTrain = labels[:split_point]
@@ -61,10 +69,31 @@ labelsTest = labels[split_point:]
 # let's use the TF-IDF vectorizer
 tfidf = True
 
+# the wordnet lemmatizer uses the wordnet tags NOUN, VERB, ADV, ADJ
+# the pos tagger outputs Penn Treebank tags, so we convert
+def mapPosToWordNetLem(par):
+    (token, tag) = par
+    if tag == 'VB' or tag == 'VBD' or tag == 'VBN' or tag == 'VBP' or tag == 'VBZ':
+        return lemmatiser.lemmatize(token, pos='v')
+    if tag == 'RB' or tag == 'RBR' or tag == 'RBS':
+        return lemmatiser.lemmatize(token, pos='r')
+    if tag == 'JJ' or tag == 'JJR' or tag == 'JJS':
+        return lemmatiser.lemmatize(token, pos='s')
+    return lemmatiser.lemmatize(token, pos='n')
+
+
+def lemmatise(doc):
+    return map(mapPosToWordNetLem, pos_tag(doc))
+
+def stem(doc):
+    return map(lambda x: stemmer.stem(x), doc)
+
+
+
 # we use a dummy function as tokenizer and preprocessor,
 # since the texts are already preprocessed and tokenized.
 if tfidf:
-    vec = TfidfVectorizer(preprocessor = identity,
+    vec = TfidfVectorizer(preprocessor = lemmatise,
                           tokenizer = identity)
 else:
     vec = CountVectorizer(preprocessor = identity,
