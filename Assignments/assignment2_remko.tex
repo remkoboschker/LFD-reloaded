@@ -74,11 +74,87 @@ total & 6000 & 100.0 & 2968 & 48 & 3132 & 52 \\
 
 \section{Method/Approach}
 
-This study compares the performance of the Scikit-learn implementations of three classification algorithms on eight different representations of the documents that need to be classified. The eight representations are generated using either the TF-IDF or Count vectoriser from the Scikit-learn Python library. Both vectorisers can be used with or without lemmatisation or the default stop word list for English included with the library. The Python NLTK toolkit performs the lemmatisation by POS tagging and then using the Wordnet Lemmatizer. I measure the performance in terms of precision, accuracy and the time it takes to train and test the models using cross-validation on one quarter of the corpus at a time.
+This study compares the performance of the Scikit-learn implementations of three classification algorithms, Naive Bayes, decision tree and k-nearest neighbour. First I compare the performance of the algorithms using default parameters but with different representations of the documents that need to be classified. Then I evaluate the effect of tuning the parameters of the algorithms using the best performing document representation. In this way I limit the number of combinations that need to be evaluated.
 
-The combinations I listed lead to a total of twenty-four experiments. I also want to improve performance by tuning the parameters of the classification algorithms. This would lead to even more combinations. I limit the number of experiments by first testing what representation works best for each of the three algorithms using the default settings and then tuning the parameters of each algorithm using the best performing representation.
+I measure the performance in terms of precision, accuracy, f1-score and the time it takes to train and test the models using four-fold cross-validation. I use the cross-validation to predict all topic labels first and then I calculate the scores. The score I use in the evaluation is the weighted average of the scores for the prediction of each of the six labels. The duration is to time it takes for all four cross validation runs to complete training and predicting. The runs are run in parallel on a computer with 16 GB of RAM and a 2.6 GHz quad core Intel i7 processor.
 
 \section{Optimising Representations}
+
+I compare twelve different representations. They are generated using either the TF-IDF or Count vectoriser from the Scikit-learn Python library. Both vectorisers can be used with or without lemmatisation or stemming and with or without the default stop word list for English included with the library. I use the \emph{PorterStemmer} and \emph{WordNetLemmatizer} from the Scikit-learn library. The \emph{WordNetLemmatizer} requires that the word is tagged as a noun, verb, adjective or adverb. I use the NLTK POS-tagger and then map the resulting Penn Treebank POS-tags to these four categories.
+
+\begin{table*}[h]\footnotesize
+\centering
+\label{tab:scores-repres-bayes}
+\begin{tabular}{ l l l l l l l }
+vectoriser & preprocessor & stop words & duration & precision & recall & f1-score \\
+\hline
+tf-idf & lemmatise & english & 2.5min & 0.9113 & 0.9087 & 0.9085 \\
+tf-idf & none & english & 1.6s & 0.9089 & 0.9058 & 0.9056 \\
+tf-idf & stem & english & 22.8s & 0.9080 & 0.9050 & 0.9048 \\
+count & stem & english & 22.5s & 0.9049 & 0.9023 & 0.9022 \\
+count & none & english & 1.6s & 0.9045 & 0.9015 & 0.9012 \\
+count & lemmatise & english & 2.7min & 0.9038 & 0.9010 & 0.9008 \\
+tf-idf & stem & none & 23.4s & 0.9036 & 0.8988 & 0.8986 \\
+count & stem & none & 22.9s & 0.9004 & 0.8972 & 0.8972 \\
+tf-idf & lemmatise & none & 2.8min & 0.9019 & 0.8968 & 0.8966 \\
+count & lemmatise & none & 2.9min & 0.8997 & 0.8955 & 0.8955 \\
+tf-idf & none & none & 2.0s & 0.9006 & 0.8953 & 0.8950 \\
+count & none & none & 2.2s & 0.8966 & 0.8918 & 0.8916 \\
+\end{tabular}
+\caption{scores for different representations and the naive Bayes classifier sorted by f1-score}
+\end{table*}
+
+Table~\ref{tab:scores-repres-bayes} shows the results of running the classification task using the naive Bayes with the twelve document representations mentioned. The results are sorted by f1-score. The difference between the highest and lowest score is only 0.0169. Using stop words to exclude words from the feature vector consistently improves the score by 0.0053 to 0.0113. Within the scores using the stop words the tf-idf vectoriser performs bettern than the count vectoriser. Lemmatising improves the score for the tf-idf vectorisation and stemming for the count vectorisation. The lemmatising increases the duration by at least a factor twenty.
+
+\begin{table*}[h]\footnotesize
+\centering
+\label{tab:scores-repres-tree}
+\begin{tabular}{ l l l l l l l }
+vectoriser & preprocessor & stop words & duration & precision & recall & f1-score \\
+\hline
+count & lemmatise & english & 2.9min & 0.8115 & 0.8073 & 0.8087 \\
+count & none & english & 5.0s & 0.8120 & 0.8065 & 0.8081 \\
+count & stem & english & 25.6s & 0.8053 & 0.8008 & 0.8023 \\
+tf-idf & none & english & 6.0s & 0.8010 & 0.7957 & 0.7974 \\
+tf-idf & lemmatise & english & 2.6min &  0.7982 & 0.7940 & 0.7955 \\
+count & stem & none & 26.7s & 0.7934 & 0.7917 & 0.7924 \\
+tf-idf & stem & english & 25.8s & 0.7939 & 0.7905 & 0.7917 \\
+count & lemmatise & none & 2.6min & 0.7926 & 0.7905 & 0.7912 \\
+count & none & none & 6.4s & 0.7911 & 0.7870 & 0.7883 \\
+tf-idf & stem & none & 29.2s & 0.7773 & 0.7763 & 0.7767 \\
+tf-idf & lemmatise & none & 3.1min & 0.7739 & 0.7730 & 0.7733 \\
+tf-idf & none & none & 8.1s & 0.7705 & 0.7680  & 0.7689 \\
+\end{tabular}
+\caption{scores for different representations and the decision tree classifier sorted by f1-score}
+\end{table*}
+
+The results for decision tree classifier are listed in table \ref{tab:scores-repres-tree}. The difference between the lowest and highest f1-score is larger than for the Naive Bayes classifier. It is 0.0398. Again the stop words improve the score 0.0150 to 0.0185. In contrast to the Bayes classifier the decision tree classifier performs better with the count vectorisation. The effect of stemming is not very clear. The highest scoring run used lemmatisation.
+
+\begin{table*}[h]\footnotesize
+\centering
+\label{tab:scores-repres-neighbour}
+\begin{tabular}{ l l l l l l l }
+vectoriser & preprocessor & stop words & duration & precision & recall & f1-score \\
+\hline
+tf-idf & stem & english & 23.8s & 0.8073 & 0.8048 & 0.8042 \\
+tf-idf & lemmatise & english & 2.6min & 0.7998 & 0.7958 & 0.7953 \\
+tf-idf & stem & none & 24.6s & 0.7903 & 0.7837 & 0.7835 \\
+tf-idf & none & english & 3.9s & 0.7835 & 0.7780 & 0.7773  \\
+tf-idf & lemmatise & none & 2.6min & 0.7767 & 0.7658 & 0.7660 \\
+tf-idf & none & none & 4.3s & 0.7489 & 0.7340 & 0.7339 \\
+count & stem & english & 23.6s & 0.5627 & 0.5455 & 0.5416 \\
+count & lemmatise & english & 2.6min & 0.5555 & 0.5352 & 0.5301 \\
+count & none & english & 3.2s & 0.4923 & 0.4775 & 0.4700 \\
+count & stem & none &  24.6s & 0.4798 & 0.4622 & 0.4569 \\
+count & lemmatise & none & 2.7min & 0.4630 & 0.4520 & 0.4448 \\
+count & none & none & 4.3s & 0.4361 & 0.4232 & 0.4158 \\
+\end{tabular}
+\caption{scores for different representations and the k-nearest neighbour classifier sorted by f1-score}
+\end{table*}
+
+Table~\ref{tab:scores-repres-neighbour} listing the results for the k-nearest neighbour classifier shows the largest difference in the f1-score. The highest score, 0.8042 is nearly twice the lowest score of 0.4158. The tf-idf vectorisation scores works better then count vectorisation and the effect of the stop words is less clear. Still the two highest scores make use of the stop word list filter. Both vectorisations perform better with the Porster stemmer than with the lemmatisation.
+
+In summary
 
 \section{Tuning Classification Algorithm Parameters}
 
@@ -90,9 +166,7 @@ The combinations I listed lead to a total of twenty-four experiments. I also wan
 
 \section{Answers to additional questions}
 
-\begin{enumerate}
-
-\item decision tree theory
+\subsection{decision tree theory}
 
 To build the decision tree for the given example with the least amount of nodes you need to branch on the test with the highest information gain first. Information gain is the expected reduction in entropy for the \emph{edible} label in the example for sorting on either the \emph{color}, \emph{size} or \emph{shape} labels. The information gain is calculated by calculating the entropy for the parent set and subtracting the weighted average entropy of the child sets resulting from splitting on the label. The entropy of a set is calculated by $\sum\limits_i - p_i \log_2 p_i $ where $p_i$ is the probability of an element being in class \emph{i} modeled as the portion of the elements in the set being of class \emph{i}. The information gain achieved by sorting on the \emph{colour, size or shape} features is listed in table~\ref{tab:gain}. Sorting on the \emph{size} first achieves the highest gain and therefore this is what should be done first.
 
@@ -138,7 +212,7 @@ shape & 0.9544 & 1 & 0.9182 & 0.9387 & 0.0157 \\
 \caption{information gain on the \emph{large} branch with respect to the edible label}
 \end{table}
 
-\begin{figure}
+\begin{figure*}
 \label{fig:tree}
 \caption{decision tree for predicting edible}
 \begin{tikzpicture}[sibling distance=10em,
@@ -177,11 +251,9 @@ shape & 0.9544 & 1 & 0.9182 & 0.9387 & 0.0157 \\
         edge from parent node {green}}
       edge from parent node {large}};
 \end{tikzpicture}
-\end{figure}
+\end{figure*}
 
 As can be seen in the tables ~\ref{tab:gain-small} and ~\ref{tab:gain-large} for the items labeled \emph{small} the next split with the most gain would be by \emph{shape} and for the items labeled large it would be \emph{colour}. The resulting tree is shown in figure ~\ref{fig:tree}. The leaf for items with the features \emph{yellow,  small, round} has a $\frac{4}{5}$ probability of being edible, but a $\frac{1}{5}$ probability of not being edible. There are no features to distinguish between them. The leaf was labeled with yes, because of the higher probability. The leaf for items with the features \emph{yellow,  large, round} was treated similarly labeling such items as not edible, although there is a $\frac{1}{5}$ probability that the item is edible. There is no item with the features \emph{green, large, round} and no branch for those features is included in the tree.
-
-\end{enumerate}
 
 \bibliography{eacl2017}
 \bibliography{yourbibfile}
