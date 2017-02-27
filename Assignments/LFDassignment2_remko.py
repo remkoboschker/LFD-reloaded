@@ -59,7 +59,7 @@ def identity(x):
     return x
 
 # let's use the TF-IDF vectorizer
-tfidf = True
+tfidf = False
 
 # the wordnet lemmatizer uses the wordnet tags NOUN, VERB, ADV, ADJ
 # the pos tagger outputs Penn Treebank tags, so we convert
@@ -85,17 +85,39 @@ def stem(doc):
 # we use a dummy function as tokenizer and preprocessor,
 # since the texts are already preprocessed and tokenized.
 if tfidf:
-    vec = TfidfVectorizer(preprocessor = stem,
+    vec = TfidfVectorizer(preprocessor = lemmatise,
                           tokenizer = identity,
                           stop_words = 'english')
 else:
-    vec = CountVectorizer(preprocessor = identity,
+    vec = CountVectorizer(preprocessor = lemmatise,
                           tokenizer = identity,
                           stop_words = 'english')
 
 # Combines the vectorizer with a Naive Bayes classifier
 classifier = Pipeline( [('vec', vec),
-                        ('cls', KNeighborsClassifier())] )
+                        ('cls',
+                        # DecisionTreeClassifier(
+                        #  criterion='gini',
+                        #  splitter='random',
+                        #  max_features=None,
+                        #  presort=False,
+                        #  max_depth=60,
+                        #  min_samples_split=5,
+                        #  min_samples_leaf=1,
+                        #  max_leaf_nodes=150
+                        # )
+                        KNeighborsClassifier(
+                            n_neighbors=49,
+                            weights='distance',
+                            algorithm='brute',
+                            leaf_size=30,
+                            metric='minkowski',
+                            p=0.5,
+                            metric_params=None,
+                            n_jobs=4
+                        )
+                        )
+                        ] )
 
 # Calls read corpus with trainset.txt as a filename and using the sentiment labels
 # assigning three quarters of the documents and labels as a training set and one quarter as

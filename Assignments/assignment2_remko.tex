@@ -74,7 +74,7 @@ total & 6000 & 100.0 & 2968 & 48 & 3132 & 52 \\
 
 \section{Method/Approach}
 
-This study compares the performance of the Scikit-learn implementations of three classification algorithms, Naive Bayes, decision tree and k-nearest neighbour. First I compare the performance of the algorithms using default parameters but with different representations of the documents that need to be classified. Then I evaluate the effect of tuning the parameters of the algorithms using the best performing document representation. In this way I limit the number of combinations that need to be evaluated.
+This study compares the performance of the Scikit-learn implementations of three classification algorithms, Multinomial Naive Bayes, decision tree and k-nearest neighbour. First I compare the performance of the algorithms using default parameters but with different representations of the documents that need to be classified. Then I evaluate the effect of tuning the parameters of the algorithms using the best performing document representation. In this way I limit the number of combinations that need to be evaluated. I do not investigate feature selection methods.
 
 I measure the performance in terms of precision, accuracy, f1-score and the time it takes to train and test the models using four-fold cross-validation. I use the cross-validation to predict all topic labels first and then I calculate the scores. The score I use in the evaluation is the weighted average of the scores for the prediction of each of the six labels. The duration is to time it takes for all four cross validation runs to complete training and predicting. The runs are run in parallel on a computer with 16 GB of RAM and a 2.6 GHz quad core Intel i7 processor.
 
@@ -104,7 +104,7 @@ count & none & none & 2.2s & 0.8966 & 0.8918 & 0.8916 \\
 \caption{scores for different representations and the naive Bayes classifier sorted by f1-score}
 \end{table*}
 
-Table~\ref{tab:scores-repres-bayes} shows the results of running the classification task using the naive Bayes with the twelve document representations mentioned. The results are sorted by f1-score. The difference between the highest and lowest score is only 0.0169. Using stop words to exclude words from the feature vector consistently improves the score by 0.0053 to 0.0113. Within the scores using the stop words the tf-idf vectoriser performs bettern than the count vectoriser. Lemmatising improves the score for the tf-idf vectorisation and stemming for the count vectorisation. The lemmatising increases the duration by at least a factor twenty.
+Table~\ref{tab:scores-repres-bayes} shows the results of running the classification task using the naive Bayes with the twelve document representations mentioned. The results are sorted by f1-score. The difference between the highest and lowest score is only 0.0169. Using stop words to exclude words from the feature vector consistently improves the score by 0.0053 to 0.0113. Within the scores using the stop words the tf-idf vectoriser performs bettern than the count vectoriser. Lemmatising improves the score for the tf-idf vectorisation and stemming for the count vectorisation. The lemmatising increases the duration by at least a factor twenty. I will use the highest scoring representation, with a f1-score of 0.9085 for the experiments with parameter tuning. This representation is the tf-idf vectorisation of the documents that was filtered by stop words and lemmatised.
 
 \begin{table*}[h]\footnotesize
 \centering
@@ -128,7 +128,7 @@ tf-idf & none & none & 8.1s & 0.7705 & 0.7680  & 0.7689 \\
 \caption{scores for different representations and the decision tree classifier sorted by f1-score}
 \end{table*}
 
-The results for decision tree classifier are listed in table \ref{tab:scores-repres-tree}. The difference between the lowest and highest f1-score is larger than for the Naive Bayes classifier. It is 0.0398. Again the stop words improve the score 0.0150 to 0.0185. In contrast to the Bayes classifier the decision tree classifier performs better with the count vectorisation. The effect of stemming is not very clear. The highest scoring run used lemmatisation.
+The results for decision tree classifier are listed in table \ref{tab:scores-repres-tree}. The difference between the lowest and highest f1-score is larger than for the Naive Bayes classifier. It is 0.0398. Again the stop words improve the score 0.0150 to 0.0185. In contrast to the Bayes classifier the decision tree classifier performs better with the count vectorisation. The effect of stemming is not very clear. The highest scoring run used lemmatisation. I will use the representation with the highest f1-score of 0.8087. It is the count vectorisation of the lemmatised document first filtered on stop words.
 
 \begin{table*}[h]\footnotesize
 \centering
@@ -152,11 +152,131 @@ count & none & none & 4.3s & 0.4361 & 0.4232 & 0.4158 \\
 \caption{scores for different representations and the k-nearest neighbour classifier sorted by f1-score}
 \end{table*}
 
-Table~\ref{tab:scores-repres-neighbour} listing the results for the k-nearest neighbour classifier shows the largest difference in the f1-score. The highest score, 0.8042 is nearly twice the lowest score of 0.4158. The tf-idf vectorisation scores works better then count vectorisation and the effect of the stop words is less clear. Still the two highest scores make use of the stop word list filter. Both vectorisations perform better with the Porster stemmer than with the lemmatisation.
+Table~\ref{tab:scores-repres-neighbour} listing the results for the k-nearest neighbour classifier shows the largest difference in the f1-score. The highest score, 0.8042 is nearly twice the lowest score of 0.4158. The tf-idf vectorisation scores works better then count vectorisation and the effect of the stop words is less clear. Still the two highest scores make use of the stop word list filter. Both vectorisations perform better with the Porster stemmer than with the lemmatisation. The best performing vectorisation uses the tf-idf statistic on the stemmed document without stop words. It has a f1-score of 0.8042 and it will be used for the parameter tuning experiments.
 
-In summary
+In summary, say something about the duration
 
 \section{Tuning Classification Algorithm Parameters}
+
+laplace = 1, 0 < 1 lidstone
+
+1, true 2.5min & 0.9113 & 0.9087 & 0.9085 \\
+1, false 3.3min 0.9114    0.9088    0.9086
+0.5, false 3.5min 0.9101    0.9082    0.9081
+0.5, true 3.2min 0.9093    0.9073    0.9072
+1.5, true 3.3min 0.9091    0.9057    0.9053
+1.5, false 3.2min 0.9093    0.9073    0.9072
+1.1, false 3.2min 0.9115    0.9088    0.9086
+0.9, false 3.0min 0.9114    0.9088    0.9087
+0.8 false 3.0min 0.9103    0.9078    0.9077
+0.1 false 2.7min 0.9034    0.9028    0.9027
+
+alpha Additive (Laplace/Lidstone) smoothing parameter (0 for no smoothing).
+fit prior true / false
+
+Presorting is not supported for sparse matrices.
+
+gini best none none 2 1 0 None 1e-7 False 2.8min 0.7988    0.7950    0.7964
+entropy best none none 2 1 0 None 1e-7 False 2.6min 0.7873    0.7847    0.7857
+gini random none none 2 1 0 None 1e-7 False 2.6min 0.7989    0.7957    0.7967
+gini random sqrt none 2 1 0 None 1e-7 False 2.5min 0.5486    0.5473    0.5475
+gini random log2 none 2 1 0 None 1e-7 False 2.6min 0.4041    0.4065    0.4049
+gini random none 5 2 1 0 None 1e-7 False 2.6min 0.6808    0.4362    0.4282
+gini random none 20 2 1 0 None 1e-7 False 2.7min 0.8203    0.7607    0.7717
+gini random none 50 2 1 0 None 1e-7 False 2.6min 0.8268    0.7667    0.7772
+gini random none 100 2 1 0 None 1e-7 False 2.6min 0.8080    0.8028    0.8043
+gini random none 75 2 1 0 None 1e-7 False 2.6min 0.8035    0.7963    0.7985
+gini random none 60 2 1 0 None 1e-7 False 2.6min 0.8207    0.8075    0.8104
+gini random none 60 0.1 1 0 None 1e-7 False 2.6min 0.8022    0.7750    0.7773
+gini random none 60 10 1 0 None 1e-7 False 2.6min 0.8089    0.7960    0.7993
+gini random none 60 3 1 0 None 1e-7 False 2.6min 0.8161    0.8035    0.8064
+gini best none 60 4 1 0 None 1e-7 False 2.8min 0.8210    0.8123    0.8146
+gini best none 60 5 1 0 None 1e-7 False 2.6min 0.8210    0.8115    0.8139
+gini best none 60 4 10 0 None 1e-7 False 2.6min 0.8001    0.7938    0.7955
+gini best none 60 4 5 0 None 1e-7 False 2.6min 0.8059    0.8008    0.8023
+gini best none 60 4 2 0 None 1e-7 False 2.7min 0.8096    0.8003    0.8027
+gini best none 60 4 1 0 10 1e-7 False 2.6min 0.8212    0.7118    0.7253
+gini best none 60 4 1 0 100 1e-7 False 2.6min 0.8335    0.8167    0.8203
+gini best none 60 4 1 0 200 1e-7 False 2.6min 0.8271    0.8145    0.8176
+gini best none 60 4 1 0 50 1e-7 False 2.6min 0.8401    0.8103    0.8158
+gini best none 60 4 1 0 75 1e-7 False 2.6min 0.8323    0.8132    0.8173
+gini best none 60 4 1 0 150 1e-7 False 2.8min 0.8322    0.8187    0.8218
+gini random none 60 4 1 0 150 1e-7 False 2.7min 0.8262    0.8100    0.8134
+
+criterion gini / entropy gini
+splitter best /random best
+max_features none
+max_depth none
+min_samples_split 2
+min_samples_leaf 1
+min_weight_fraction_leaf 0
+random state None
+min_impurity_split 1e-7
+presort False
+
+
+
+
+maximum number of leaves
+minimum number of samples per leaf
+
+knearest
+
+weight uniform distance
+algorithm ball_tree kd_tree brute auto
+metric minkowski p=2 eql euclidean
+p
+n_jobs 4
+
+all brute because sparse features
+
+neighbours weights algorithm leaf_size metric p
+3 uniform auto 30 minkowski 2 2.8min 0.5441    0.5062    0.4978
+5 uniform auto 30 minkowski 2 2.8min 0.5555    0.5352    0.5301
+7 uniform auto 30 minkowski 2 2.6min 0.5832    0.5537    0.5513
+9 uniform auto 30 minkowski 2 2.6min  0.5881    0.5568    0.5556
+11 uniform auto 30 minkowski 2 3.1min 0.6021    0.5625    0.5643
+13 uniform auto 30 minkowski 2 2.6min  0.6083    0.5682    0.5697
+15 uniform auto 30 minkowski 2 2.7min 0.6158    0.5698    0.5720
+17 uniform auto 30 minkowski 2 2.7min 0.6208    0.5722    0.5744
+19 uniform auto 30 minkowski 2 2.6min 0.6266    0.5735    0.5774
+21 uniform auto 30 minkowski 2 3.0min 0.6350    0.5795    0.5839
+49 uniform auto 30 minkowski 2 2.7min 0.6689    0.5823    0.5946
+55 uniform auto 30 minkowski 2 3.1min 0.6696    0.5788    0.5909
+63 uniform auto 30 minkowski 2 2.9min 0.6797    0.5753    0.5893
+81 uniform auto 30 minkowski 2 2.6min 0.6745    0.5632    0.5791
+121 uniform auto 30 minkowski 2 2.8min 0.6764    0.5428    0.5617
+49 distance auto 30 minkowski 2 2.8min 0.6903    0.6055    0.6204
+49 distance brute 15 minkowski 2 3.0min  0.6903    0.6055    0.6204
+49 distance brute 45 minkowski 2 3.0min  0.6903    0.6055    0.6204
+49 distance auto 30 minkowski 1 3.4min 0.7226    0.6507    0.6644
+
+\begin{tikzpicture}
+\begin{axis}[
+    title={Temperature dependence of CuSO$_4\cdot$5H$_2$O solubility},
+    xlabel={Temperature [\textcelsius]},
+    ylabel={Solubility [g per 100 g water]},
+    xmin=0, xmax=100,
+    ymin=0, ymax=120,
+    xtick={0,20,40,60,80,100},
+    ytick={0,20,40,60,80,100,120},
+    legend pos=north west,
+    ymajorgrids=true,
+    grid style=dashed,
+]
+
+\addplot[
+    color=blue,
+    mark=square,
+    ]
+    coordinates {
+    (0,23.1)(10,27.5)(20,32)(30,37.8)(40,44.6)(60,61.8)(80,83.8)(100,114)
+    };
+    \legend{CuSO$_4\cdot$5H$_2$O}
+
+\end{axis}
+\end{tikzpicture}
+
 
 \section{Results}
 
