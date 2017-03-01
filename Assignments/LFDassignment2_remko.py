@@ -99,7 +99,7 @@ def lemmatise(doc):
     return map(lambda x: mapPosToWordNetLem(*x), pos_tag(doc))
 
 def stem(doc):
-    return map(lambda x: stemmer.stem(x), doc)
+    return map(stemmer.stem, doc)
 
 # a dummy function that just returns its input
 def identity(x):
