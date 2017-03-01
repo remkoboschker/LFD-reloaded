@@ -23,7 +23,8 @@
 \usepackage{url}
 \usepackage{latexsym}
 \usepackage{tikz}
-
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.14}
 
 %%%% LEAVE THIS IN
 \eaclfinalcopy
@@ -44,18 +45,19 @@
 \begin{document}
 \maketitle
 \begin{abstract}
-This study compares the performance of naive Bayes, decision tree and k-nearest neighbour classification of a corpus of reviews by topic.
+This study compares the performance of naive Bayes, decision tree and k-nearest neighbour classification of a corpus of reviews by topic. I first investigate what representation of the data works best and find that filtering out stop words works well while the decision tree classifier prefers a count vector instead of a tf-idf vector and the k-nearest neighbour prefers the document to be stemmed versus lemmatised. I next tune the various parameters of the algorithms to find a best f1-score of 0.9087 for the Naive Bayes, of 0.8206 for the Decision Tree and of 0.6644 for the K-nearest Neighbour classification.
 \end{abstract}
 
 \section{Introduction}
 
-This study attempts to find the best way to classify reviews by topic. I will analyse the performance of three methods and for each method I will try to find the optimal parameter settings. The methods are naive Bayes, decision tree and k-nearest neighbour classification. I will also analyse what representation of the documents gives the best performance. The representations I want to try are a vector containing the term frequency - inverse document frequency statistic for each word in the document and a sparse matrix containing per document all the counts for all the words in the corpus. For both the vectorisations I will experiment with lemmatisation of the input words and with a stop word list.
+This study attempts to find the best way to classify reviews by topic. I will analyse the performance of three classification algorithms and for each I will try to find the optimal parameter settings. The algorithms are naive Bayes, decision tree and k-nearest neighbour. I will also analyse what representation of the documents gives the best performance. The representations I want to try are a vector containing the term frequency - inverse document frequency statistic for each word in the document and a sparse matrix containing per document all the counts for all the words in the corpus. For both the vectorisations I will experiment with lemmatisation or stemming of the input words and with a stop word list.
 
 \section{Data}
 
 The study uses a corpus of six thousand product reviews. Each review consists of a label indicating whether the review is positive or negative and a label indicating to which of the followings six topics it belongs: books, camera, dvd, health, music or software. The review also contains a file reference and the actual text of the review. The topic and sentiment labels are distributed almost equally across the corpus. About half of the reviews about a particular topic are labeled positive. Table ~\ref{tab:corpus} shows the counts for the labels in the corpus.
 
-\begin{table}[h]\footnotesize
+\begin{table}[ht]\footnotesize
+\caption{counts of topic and sentiment labels}
 \label{tab:corpus}
 \begin{tabular}{ l r r r r r r }
 topic & cnt & \% & pos & \% & neg & \% \\
@@ -69,7 +71,7 @@ camera & 988 & 16.5 & 504 & 51 & 484 & 49 \\
 \hline
 total & 6000 & 100.0 & 2968 & 48 & 3132 & 52 \\
 \end{tabular}
-\caption{counts of topic and sentiment labels}
+
 \end{table}
 
 \section{Method/Approach}
@@ -82,9 +84,8 @@ I measure the performance in terms of precision, accuracy, f1-score and the time
 
 I compare twelve different representations. They are generated using either the TF-IDF or Count vectoriser from the Scikit-learn Python library. Both vectorisers can be used with or without lemmatisation or stemming and with or without the default stop word list for English included with the library. I use the \emph{PorterStemmer} and \emph{WordNetLemmatizer} from the Scikit-learn library. The \emph{WordNetLemmatizer} requires that the word is tagged as a noun, verb, adjective or adverb. I use the NLTK POS-tagger and then map the resulting Penn Treebank POS-tags to these four categories.
 
-\begin{table*}[h]\footnotesize
+\begin{table*}[ht]\footnotesize
 \centering
-\label{tab:scores-repres-bayes}
 \begin{tabular}{ l l l l l l l }
 vectoriser & preprocessor & stop words & duration & precision & recall & f1-score \\
 \hline
@@ -102,13 +103,13 @@ tf-idf & none & none & 2.0s & 0.9006 & 0.8953 & 0.8950 \\
 count & none & none & 2.2s & 0.8966 & 0.8918 & 0.8916 \\
 \end{tabular}
 \caption{scores for different representations and the naive Bayes classifier sorted by f1-score}
+\label{tab:repres-bayes}
 \end{table*}
 
-Table~\ref{tab:scores-repres-bayes} shows the results of running the classification task using the naive Bayes with the twelve document representations mentioned. The results are sorted by f1-score. The difference between the highest and lowest score is only 0.0169. Using stop words to exclude words from the feature vector consistently improves the score by 0.0053 to 0.0113. Within the scores using the stop words the tf-idf vectoriser performs bettern than the count vectoriser. Lemmatising improves the score for the tf-idf vectorisation and stemming for the count vectorisation. The lemmatising increases the duration by at least a factor twenty. I will use the highest scoring representation, with a f1-score of 0.9085 for the experiments with parameter tuning. This representation is the tf-idf vectorisation of the documents that was filtered by stop words and lemmatised.
+Table~\ref{tab:repres-bayes} shows the results of running the classification task using the naive Bayes with the twelve document representations mentioned. The results are sorted by f1-score. The difference between the highest and lowest score is only 0.0169. Using stop words to exclude words from the feature vector consistently improves the score by at least 0.0053 and at most 0.0113. Within the scores using the stop words the tf-idf vectoriser performs better than the count vectoriser. Lemmatising improves the score for the tf-idf vectorisation and stemming for the count vectorisation. The lemmatising increases the duration by at least a factor twenty. I will use the highest scoring representation, with a f1-score of 0.9085 for the experiments with parameter tuning. This representation is the tf-idf vectorisation of the lemmatised documents without stop words.
 
-\begin{table*}[h]\footnotesize
+\begin{table*}[ht]\footnotesize
 \centering
-\label{tab:scores-repres-tree}
 \begin{tabular}{ l l l l l l l }
 vectoriser & preprocessor & stop words & duration & precision & recall & f1-score \\
 \hline
@@ -126,13 +127,13 @@ tf-idf & lemmatise & none & 3.1min & 0.7739 & 0.7730 & 0.7733 \\
 tf-idf & none & none & 8.1s & 0.7705 & 0.7680  & 0.7689 \\
 \end{tabular}
 \caption{scores for different representations and the decision tree classifier sorted by f1-score}
+\label{tab:repres-tree}
 \end{table*}
 
-The results for decision tree classifier are listed in table \ref{tab:scores-repres-tree}. The difference between the lowest and highest f1-score is larger than for the Naive Bayes classifier. It is 0.0398. Again the stop words improve the score 0.0150 to 0.0185. In contrast to the Bayes classifier the decision tree classifier performs better with the count vectorisation. The effect of stemming is not very clear. The highest scoring run used lemmatisation. I will use the representation with the highest f1-score of 0.8087. It is the count vectorisation of the lemmatised document first filtered on stop words.
+The results for the decision tree classifier using default parameters are listed in table~\ref{tab:repres-tree}. The difference between the lowest and highest f1-score, 0.0398, is larger than that difference for the Naive Bayes classifier. The stop words improve the score by at least 0.0150 and at most 0.0185. In contrast to the Bayes classifier the decision tree classifier performs better with the count vectorisation. The effect of stemming is not very clear. The highest scoring run used lemmatisation. I will use the representation with the highest f1-score of 0.8087. It is the count vectorisation of the lemmatised document without stop words.
 
-\begin{table*}[h]\footnotesize
+\begin{table*}[ht]\footnotesize
 \centering
-\label{tab:scores-repres-neighbour}
 \begin{tabular}{ l l l l l l l }
 vectoriser & preprocessor & stop words & duration & precision & recall & f1-score \\
 \hline
@@ -150,139 +151,192 @@ count & lemmatise & none & 2.7min & 0.4630 & 0.4520 & 0.4448 \\
 count & none & none & 4.3s & 0.4361 & 0.4232 & 0.4158 \\
 \end{tabular}
 \caption{scores for different representations and the k-nearest neighbour classifier sorted by f1-score}
+\label{tab:repres-neighbour}
 \end{table*}
 
-Table~\ref{tab:scores-repres-neighbour} listing the results for the k-nearest neighbour classifier shows the largest difference in the f1-score. The highest score, 0.8042 is nearly twice the lowest score of 0.4158. The tf-idf vectorisation scores works better then count vectorisation and the effect of the stop words is less clear. Still the two highest scores make use of the stop word list filter. Both vectorisations perform better with the Porster stemmer than with the lemmatisation. The best performing vectorisation uses the tf-idf statistic on the stemmed document without stop words. It has a f1-score of 0.8042 and it will be used for the parameter tuning experiments.
+Table~\ref{tab:repres-neighbour} lists the results for the k-nearest neighbour classifier. It shows the largest difference in the f1-score for the different representations of the three algorithms. The highest score, 0.8042 is nearly twice the lowest score of 0.4158. The tf-idf vectorisation scores higher than the count vectorisation. The effect of the stop words is less clear than was the case for the other algorithms. Still the two highest scores make use of the stop word list filter. Both vectorisations perform better with the Porter stemmer than with the lemmatisation. The best performing vectorisation uses the tf-idf statistic on the stemmed document without stop words and it will be used for the parameter tuning experiments.
 
-In summary, say something about the duration
+All three algorithms perform better when the vector representation of the review documents do not contain any of the stop words in the list included with the Scikit-learn library. Clearly these words or less relevant for classification. The optimal representation for Naive Bayes, lemmatised and using the tf-idf statistic, is what I would expect given that these measure seem to be a more accurate representation of the features of a document. However K-nearest neighbour works better with the documents stemmed and the decision tree works better with the count vectoriser. I cannot explain this result, but would like to note again that the differences is the scores are very small indeed. Comparing the duration of the training and testing without any preprocessing and with default settings (see table~\ref{tab:repres-duration}) shows that Multinomial Naive Bayes is 3 to 4 times faster than a decision tree and twice as fast as k-nearest neighbour while showing the highest scores. However stemming adds about 20 seconds and lemmatising about two and a half minutes. So when using preprocessing the differences between the durations for the algorithms does not seem a relevant factor in preferring one over the other.
+
+\begin{table}[ht]\footnotesize
+\centering
+\begin{tabular}{ l l l l l l l }
+algorithm & vectoriser & duration & f1-score \\
+\hline
+MB & count &  2.2s & 0.8916 \\
+MB & tf-idf & 2.0s & 0.8950 \\
+DT & count &  6.4s & 0.7883 \\
+DT & tf-idf & 8.1s & 0.7689 \\
+KNN & count & 4.3s & 0.4158 \\
+KNN & tf-idf & 4.3s & 0.7339 \\
+\end{tabular}
+\caption{duration of an experiment run without preprocessing}
+\label{tab:repres-duration}
+\end{table}
 
 \section{Tuning Classification Algorithm Parameters}
 
-laplace = 1, 0 < 1 lidstone
+In this section I use the optimal representations found in the previous one to investigate the effect of the various tuning options for the three algorithms. I go through all the options that are available for the particular data representation.
 
-1, true 2.5min & 0.9113 & 0.9087 & 0.9085 \\
-1, false 3.3min 0.9114    0.9088    0.9086
-0.5, false 3.5min 0.9101    0.9082    0.9081
-0.5, true 3.2min 0.9093    0.9073    0.9072
-1.5, true 3.3min 0.9091    0.9057    0.9053
-1.5, false 3.2min 0.9093    0.9073    0.9072
-1.1, false 3.2min 0.9115    0.9088    0.9086
-0.9, false 3.0min 0.9114    0.9088    0.9087
-0.8 false 3.0min 0.9103    0.9078    0.9077
-0.1 false 2.7min 0.9034    0.9028    0.9027
+\begin{table}[ht]\footnotesize
+\centering
+\begin{tabular}{ l l l l l l l }
+$\alpha$  & fit prior & duration & precision & recall & f1-score \\
+\hline
+0.9 & false & 3.0min & 0.9114 & 0.9088 & 0.9087 \\
+1 & false & 3.3min & 0.9114 & 0.9088 & 0.9086 \\
+1.1 & false & 3.2min & 0.9115 & 0.9088 & 0.9086 \\
+1 & true & 2.5min & 0.9113 & 0.9087 & 0.9085 \\
+0.5 & false & 3.5min & 0.9101 & 0.9082 & 0.9081 \\
+0.8 & false & 3.0min & 0.9103 & 0.9078 & 0.9077 \\
+0.5 & true & 3.2min & 0.9093 & 0.9073 & 0.9072 \\
+1.5 & false & 3.2min & 0.9093 & 0.9073 & 0.9072 \\
+1.5 & true & 3.3min & 0.9091 & 0.9057 & 0.9053 \\
+0.1 & false & 2.7min & 0.9034 & 0.9028 & 0.9027 \\
+\end{tabular}
+\caption{scores for different parameter settings of the naive Bayes algorithm}
+\label{tab:tune-bayes}
+\end{table}
 
-alpha Additive (Laplace/Lidstone) smoothing parameter (0 for no smoothing).
-fit prior true / false
-
-Presorting is not supported for sparse matrices.
-
-gini best none none 2 1 0 None 1e-7 False 2.8min 0.7988    0.7950    0.7964
-entropy best none none 2 1 0 None 1e-7 False 2.6min 0.7873    0.7847    0.7857
-gini random none none 2 1 0 None 1e-7 False 2.6min 0.7989    0.7957    0.7967
-gini random sqrt none 2 1 0 None 1e-7 False 2.5min 0.5486    0.5473    0.5475
-gini random log2 none 2 1 0 None 1e-7 False 2.6min 0.4041    0.4065    0.4049
-gini random none 5 2 1 0 None 1e-7 False 2.6min 0.6808    0.4362    0.4282
-gini random none 20 2 1 0 None 1e-7 False 2.7min 0.8203    0.7607    0.7717
-gini random none 50 2 1 0 None 1e-7 False 2.6min 0.8268    0.7667    0.7772
-gini random none 100 2 1 0 None 1e-7 False 2.6min 0.8080    0.8028    0.8043
-gini random none 75 2 1 0 None 1e-7 False 2.6min 0.8035    0.7963    0.7985
-gini random none 60 2 1 0 None 1e-7 False 2.6min 0.8207    0.8075    0.8104
-gini random none 60 0.1 1 0 None 1e-7 False 2.6min 0.8022    0.7750    0.7773
-gini random none 60 10 1 0 None 1e-7 False 2.6min 0.8089    0.7960    0.7993
-gini random none 60 3 1 0 None 1e-7 False 2.6min 0.8161    0.8035    0.8064
-gini best none 60 4 1 0 None 1e-7 False 2.8min 0.8210    0.8123    0.8146
-gini best none 60 5 1 0 None 1e-7 False 2.6min 0.8210    0.8115    0.8139
-gini best none 60 4 10 0 None 1e-7 False 2.6min 0.8001    0.7938    0.7955
-gini best none 60 4 5 0 None 1e-7 False 2.6min 0.8059    0.8008    0.8023
-gini best none 60 4 2 0 None 1e-7 False 2.7min 0.8096    0.8003    0.8027
-gini best none 60 4 1 0 10 1e-7 False 2.6min 0.8212    0.7118    0.7253
-gini best none 60 4 1 0 100 1e-7 False 2.6min 0.8335    0.8167    0.8203
-gini best none 60 4 1 0 200 1e-7 False 2.6min 0.8271    0.8145    0.8176
-gini best none 60 4 1 0 50 1e-7 False 2.6min 0.8401    0.8103    0.8158
-gini best none 60 4 1 0 75 1e-7 False 2.6min 0.8323    0.8132    0.8173
-gini best none 60 4 1 0 150 1e-7 False 2.8min 0.8322    0.8187    0.8218
-gini random none 60 4 1 0 150 1e-7 False 2.7min 0.8262    0.8100    0.8134
-
-criterion gini / entropy gini
-splitter best /random best
-max_features none
-max_depth none
-min_samples_split 2
-min_samples_leaf 1
-min_weight_fraction_leaf 0
-random state None
-min_impurity_split 1e-7
-presort False
+The Multinomial Naive Bayes algorithm takes two parameters, one for value use in smoothing and one to select wether or not to fit using prior probabilities based on the data. Because the data set has a nearly equal distribution over the topic labels, calculating the prior probabilities does not improve the scoring. Not calculating the priors actually consistently slightly improves the accuracy. Using a smoothing value of 1 is called Laplace and a value between 0 and 1 as Lidstone smoothing. One and 0.5 are the most common values used. Scores are higher using a smoothing close to one with an interesting exception for 0.5. The highest score uses a value of 0.9. Also here the differences are less than one percent. The scores are listed in Table~\ref{tab:tune-bayes}
 
 
+\begin{table}[ht]\footnotesize
+\centering
+\begin{tabular}{ l l l l }
+criterion & splitter & \# features & f1-score \\
+\hline
+gini & best & none &  0.7964 \\
+entropy & best & none &  0.7857 \\
+gini & random & none &  0.7967 \\
+gini & random & sqrt & 0.5475 \\
+gini & random & log2 & 0.4049 \\
+\end{tabular}
+\caption{scores for different parameter settings for tree construction}
+\label{tab:tune-tree-split}
+\end{table}
+
+The decision tree classification algorithm supports several ways of influencing how the tree is constructed. You can choose if the algorithm decides on the best split based on the information gain or Gini impurity. You can then determine of that measure is used to alway select the best split or to select the best of a number of random splits. Thirdly you can provide different measures to only consider part of the available feature for the splitting. I ran a few experiments evaluating these parameters. Pre-sorting was not available as an option, because we are using a sparse count vectorisation. Gini appears to perform slightly better than information gain. Random split evaluation can improve performance, but does not give a stable result and makes it hard to evaluate the effect of tuning the parameters for pruning the tree. Not including all the features sharply decreases performance. For the rest of the tuning I use the Gini criterion to find the best split considering all the features. The results are listed in table~\ref{tab:tune-tree-split}
+
+\begin{table*}[ht]\footnotesize
+\centering
+\begin{tabular}{ l l l l l l l }
+max depth & min for split & min for leaf & max leaves & accuracy & recall & f1-score \\
+\hline
+5   & 2   & 1  & None & 0.8251 & 0.6035 & 0.6264 \\
+20  & 2   & 1  & None & 0.8377 & 0.7903 & 0.7987 \\
+50  & 2   & 1  & None & 0.8223 & 0.8107 & 0.8136 \\
+60  & 2   & 1  & None & 0.8193 & 0.8097 & 0.8124 \\
+75  & 2   & 1  & None & 0.8152 & 0.8088 & 0.8108 \\
+100 & 2   & 1  & None & 0.8122 & 0.8077 & 0.8093 \\
+50  & 0.1 & 1  & None & 0.8296 & 0.8055 & 0.8096 \\
+50  & 10  & 1  & None & 0.8223 & 0.8103 & 0.8134 \\
+50  & 5   & 1  & None & 0.8232 & 0.8115 & 0.8143 \\
+50  & 4   & 1  & None & 0.8220 & 0.8110 & 0.8137 \\
+50  & 5   & 10 & None & 0.8010 & 0.7937 & 0.7957 \\
+50  & 5   & 5  & None & 0.8129 & 0.8038 & 0.8062 \\
+50  & 5   & 2  & None & 0.8122 & 0.8007 & 0.8033 \\
+50  & 5   & 1  & 200  & 0.8297 & 0.8157 & 0.8190 \\
+50  & 5   & 1  & 150  & 0.8321 & 0.8172 & 0.8206 \\
+50  & 5   & 1  & 100  & 0.8334 & 0.8163 & 0.8199 \\
+50  & 5   & 1  & 50   & 0.8410 & 0.8112 & 0.8167 \\
+\end{tabular}
+\caption{scores for different parameter settings for tree construction}
+\label{tab:tune-tree-prune}
+\end{table*}
 
 
-maximum number of leaves
-minimum number of samples per leaf
+Pruning the decision tree is the process of reducing the number of splits to make the tree less sensitive to slightly different input values (reduce overfitting). We can set how many times the tree may split, the least amount of samples required for a split, the least amount of samples that should be in a leaf of the tree and the maximum number of leaf nodes. In addition to these there are some settings to handle uneven distribution of samples.
 
-knearest
+Limiting the depth of the tree improves accuracy but worsens recall as can be seen in table~\ref{tab:tune-tree-prune}. A balance between the two leading to the highest f1 score is reached when limiting the depth to 50. Looking at the minimum number of samples that should be available to make a split you can see that for a large number of samples, ten percent in the table, leeds to a higher accuracy, but lower recall. Tuning the required sample size for ten and below shows an improvement in both measures simultaneously. The minimum number of samples required in a leaf node shows the best result for the default value of one while the related measure of limiting the number of leaves does show a positive effect at a maximum of 150 leaves.
 
-weight uniform distance
-algorithm ball_tree kd_tree brute auto
-metric minkowski p=2 eql euclidean
-p
-n_jobs 4
+I expected a similar accuracy - recall tradeoff in parameters limiting the width of the tree as I found for the parameter limiting the depth of the tree, but found none. Perhaps these effects would be clearer if there was no limit set on the depth; something I could evaluate at another time. The duration of the experiments does not really vary with tuning the parameters. It is about three minutes. However using a best random split is about half a minute faster.
 
-all brute because sparse features
+The k-nearest neighbours algorithm allows for tuning based on the number of neighbours in the vector space that are looked at to determine the classification. The weight parameter specifies it all neighbours are counted equally in determining the label or if closer neighbours are counted more heavily. Then there are several ways to measure the distance between neighbours. I try Euclidean and Manhattan distance, Minkowski distance with a power of 2 and 1 respectively. Lastly it is possible to specify the way in which the algorithm searches for neighbours. Although I use tf-idf vectors I can only use brute force search to find the nearest neighbours. The faster \emph{KDTree} and \emph{BallTree} algorithms give an error about sparse features.
 
-neighbours weights algorithm leaf_size metric p
-3 uniform auto 30 minkowski 2 2.8min 0.5441    0.5062    0.4978
-5 uniform auto 30 minkowski 2 2.8min 0.5555    0.5352    0.5301
-7 uniform auto 30 minkowski 2 2.6min 0.5832    0.5537    0.5513
-9 uniform auto 30 minkowski 2 2.6min  0.5881    0.5568    0.5556
-11 uniform auto 30 minkowski 2 3.1min 0.6021    0.5625    0.5643
-13 uniform auto 30 minkowski 2 2.6min  0.6083    0.5682    0.5697
-15 uniform auto 30 minkowski 2 2.7min 0.6158    0.5698    0.5720
-17 uniform auto 30 minkowski 2 2.7min 0.6208    0.5722    0.5744
-19 uniform auto 30 minkowski 2 2.6min 0.6266    0.5735    0.5774
-21 uniform auto 30 minkowski 2 3.0min 0.6350    0.5795    0.5839
-49 uniform auto 30 minkowski 2 2.7min 0.6689    0.5823    0.5946
-55 uniform auto 30 minkowski 2 3.1min 0.6696    0.5788    0.5909
-63 uniform auto 30 minkowski 2 2.9min 0.6797    0.5753    0.5893
-81 uniform auto 30 minkowski 2 2.6min 0.6745    0.5632    0.5791
-121 uniform auto 30 minkowski 2 2.8min 0.6764    0.5428    0.5617
-49 distance auto 30 minkowski 2 2.8min 0.6903    0.6055    0.6204
-49 distance brute 15 minkowski 2 3.0min  0.6903    0.6055    0.6204
-49 distance brute 45 minkowski 2 3.0min  0.6903    0.6055    0.6204
-49 distance auto 30 minkowski 1 3.4min 0.7226    0.6507    0.6644
-
+\begin{figure}
+  \caption{plot of accuracy and f1-score for different values of K}
+  \label{fig:tuning-knearest-k}
 \begin{tikzpicture}
-\begin{axis}[
-    title={Temperature dependence of CuSO$_4\cdot$5H$_2$O solubility},
-    xlabel={Temperature [\textcelsius]},
-    ylabel={Solubility [g per 100 g water]},
-    xmin=0, xmax=100,
-    ymin=0, ymax=120,
-    xtick={0,20,40,60,80,100},
-    ytick={0,20,40,60,80,100,120},
+
+	\begin{axis}[
+    title={},
+    xlabel={},
+    ylabel={},
+    xmin=0, xmax=125,
+    ymin=0.5, ymax=0.7,
     legend pos=north west,
     ymajorgrids=true,
     grid style=dashed,
-]
-
-\addplot[
+	]
+  \addplot [
     color=blue,
     mark=square,
-    ]
-    coordinates {
-    (0,23.1)(10,27.5)(20,32)(30,37.8)(40,44.6)(60,61.8)(80,83.8)(100,114)
-    };
-    \legend{CuSO$_4\cdot$5H$_2$O}
+    ] coordinates {
+    (3,  0.5441)
+    (5,  0.5555)
+    (7,  0.5832)
+    (9,  0.5881)
+    (11, 0.6021)
+    (13, 0.6083)
+    (15, 0.6158)
+    (17, 0.6208)
+    (19, 0.6266)
+    (21, 0.6350)
+    (49, 0.6689)
+    (55, 0.6696)
+    (63, 0.6797)
+    (81, 0.6745)
+    (121,0.6764 )
+  };
+  \addlegendentry{accuracy}
 
-\end{axis}
+	\addplot [
+    color=red,
+    mark=triangle,
+    ] coordinates {
+		(3, 0.4978 )
+    (5,  0.5301)
+    (7,  0.5513)
+    (9,  0.5556)
+    (11, 0.5643)
+    (13, 0.5697)
+    (15, 0.5720)
+    (17, 0.5744)
+    (19, 0.5774)
+    (21, 0.5839)
+    (49, 0.5946)
+    (55, 0.5909)
+    (63, 0.5893)
+    (81, 0.5791)
+    (121, 0.5617)
+	};
+	\addlegendentry{f1-score}
+	\end{axis}
 \end{tikzpicture}
+\end{figure}
 
+The results for different values of \emph{k} using the default settings for the other parameters are drawn in figure~\ref{fig:tuning-knearest-k}. There is no clear increase of the duration for a larger number of neighbours. The plot shows that for a larger number of \emph{k} the accuracy increases initially but the rate of increase becomes smaller and smaller. There is a remarkable spike of accuracy at \emph{k} equals 63. However the recall starts the go down after \emph{k} becomes larger than 55. The optimum in terms of the f1-score is achieved with \emph{k} at 49. Increasing the number of \emph{k} increases the variance of the system, but decreases its bias and as a result the recall of the system starts to go down. The model has been overfitted.
 
-\section{Results}
+\begin{table}[ht]\footnotesize
+\centering
+\begin{tabular}{ l l l l l l l }
+weighting & power & duration & f1-score \\
+\hline
+uniform  & 2 & 2.7min & 0.5946 \\
+uniform  & 1 & 3.9min & 0.6380 \\
+distance & 2 & 2.8min & 0.6204 \\
+distance & 1 & 3.4min & 0.6644 \\
+\end{tabular}
+\caption{scores for different parameter settings calculating distance to and weight of a neighbour for k=49}
+\label{tab:tuning-knearest-dist}
+\end{table}
+
+The table~\ref{tab:tuning-knearest-dist} shows the scores for the uniform and distance related weighting (closer is more important) of the labels of the neighbours to determine the class as well as for the Euclidean and Manhattan distance. The distance weighting performs better than the uniform one and the Manhattan distance performs remarkably better than Euclidean distance. This is to be expected because the feature vector has a high number of dimensions and a higher Minkowski power puts more emphasis on the largest difference between any two dimensions while a lower power takes more of the dimensions into account. Therefore the Manhattan distance ofter works better than Euclidean distance for high dimensionality vectors.
 
 \section{Discussion/Conclusion}
 
-
+I explored the tuning options available for the given algorithms and document representation. I am surprised to learn how well the Naive Bayes implementations works for this particular task. It was the fastest, easiest to configure and achieved the highest score. The influence of the different parameters is often very small. It would be interesting to extend this exploration to include feature selection techniques to evaluate how far you can go in improving the representation of the data set (feature engineering) for a particular classifier.
 
 \section{Answers to additional questions}
 
@@ -333,8 +387,9 @@ shape & 0.9544 & 1 & 0.9182 & 0.9387 & 0.0157 \\
 \end{table}
 
 \begin{figure*}
-\label{fig:tree}
-\caption{decision tree for predicting edible}
+  \caption{decision tree for predicting edible}
+  \label{fig:tree}
+
 \begin{tikzpicture}[sibling distance=10em,
   every node/.style = {shape=rectangle, rounded corners,
     draw, align=center,

@@ -29,6 +29,16 @@ parser.add_argument(
     choices=[True, False]
 )
 
+parser.add_argument(
+    '--algo',
+    default='bayes',
+    type=str,
+    dest='algo',
+    help='string to select algorithm used',
+    metavar='algorithm',
+    choices=['bayes', 'tree', 'neighbour']
+)
+
 args = parser.parse_args()
 
 
@@ -51,15 +61,9 @@ def read_corpus(corpus_file, use_sentiment):
             else:
                 # 6-class problem: books, camera, dvd, health, music, software
                 labels.append( tokens[0] )
-
     return documents, labels
 
-# a dummy function that just returns its input
-def identity(x):
-    return x
 
-# let's use the TF-IDF vectorizer
-tfidf = False
 
 # the wordnet lemmatizer uses the wordnet tags NOUN, VERB, ADV, ADJ
 # the pos tagger outputs Penn Treebank tags, so we convert
@@ -80,92 +84,57 @@ def lemmatise(doc):
 def stem(doc):
     return map(lambda x: stemmer.stem(x), doc)
 
-
-
-# we use a dummy function as tokenizer and preprocessor,
-# since the texts are already preprocessed and tokenized.
-if tfidf:
-    vec = TfidfVectorizer(preprocessor = lemmatise,
-                          tokenizer = identity,
-                          stop_words = 'english')
-else:
-    vec = CountVectorizer(preprocessor = lemmatise,
-                          tokenizer = identity,
-                          stop_words = 'english')
+# a dummy function that just returns its input
+def identity(x):
+    return x
 
 # Combines the vectorizer with a Naive Bayes classifier
-classifier = Pipeline( [('vec', vec),
-                        ('cls',
-                        # DecisionTreeClassifier(
-                        #  criterion='gini',
-                        #  splitter='random',
-                        #  max_features=None,
-                        #  presort=False,
-                        #  max_depth=60,
-                        #  min_samples_split=5,
-                        #  min_samples_leaf=1,
-                        #  max_leaf_nodes=150
-                        # )
-                        KNeighborsClassifier(
-                            n_neighbors=49,
-                            weights='distance',
-                            algorithm='brute',
-                            leaf_size=30,
-                            metric='minkowski',
-                            p=0.5,
-                            metric_params=None,
-                            n_jobs=4
-                        )
-                        )
-                        ] )
+if args.algo == 'bayes':
+    classifier = Pipeline(
+        [('vec', TfidfVectorizer(
+            preprocessor = lemmatise,
+            tokenizer = identity,
+            stop_words = 'english')
+        )),
+        ('cls', MultinomialNB(
+            alpha=0.9,
+            fit_prior=False
+        )])
+if args.algo == 'tree':
+    classifier = Pipeline(
+        [('vec', CountVectorizer(
+            preprocessor = lemmatise,
+            tokenizer = identity,
+            stop_words = 'english')
+        )),
+        ('cls', DecisionTreeClassifier(
+         criterion='gini',
+         splitter='best',
+         max_features=None,
+         presort=False,
+         max_depth=50,
+         min_samples_split=5,
+         min_samples_leaf=1,
+         max_leaf_nodes=150
+        ))])
+if args.algo == 'neighbour':
+    classifier = Pipeline(
+        [('vec', TfidfVectorizer(
+            preprocessor = stem,
+            tokenizer = identity,
+            stop_words = 'english')
+        )),
+        ('cls', KNeighborsClassifier(
+            n_neighbors=49,
+            weights='uniform',
+            algorithm='brute',
+            metric='minkowski',
+            p=1,
+            metric_params=None,
+            n_jobs=4
+        ))])
 
-# Calls read corpus with trainset.txt as a filename and using the sentiment labels
-# assigning three quarters of the documents and labels as a training set and one quarter as
-# a test set
 documents, labels = read_corpus('trainset.txt', args.use_sentiment)
-# split_point = int(0.75*len(documents))
-# documentsTrain = documents[:split_point]
-# labelsTrain = labels[:split_point]
-# documentsTest = documents[split_point:]
-# labelsTest = labels[split_point:]
-
-
-
-# # Performs classification on the vecorization of the documents in the test set.
-# labelsGuess = classifier.predict(documentsTest)
-
-# def printResults():
-#     # Prints a report containing the f-score, precision, recall and number of supporting instances
-#     print(classification_report(labelsTest, labelsGuess))
-#     # Prints the confusion matrix
-#     print(confusion_matrix(labelsTest, labelsGuess))
-#
-#     print(classifier.predict_proba(documentsTest[:10]))
-#
-# def run(XTrain, XTest, yTrain, yTest):
-#     t0 = time.time()
-#     # Fits a naive bayes classifier according to the training vectors that come from
-#     # the vectorization of the documents to the target values in the label training set.
-#     classifier.fit(XTrain, yTrain)
-#     trained = time.time()
-#     predictions = classifier.predict(XTest)
-#     guessed = time.time()
-#     return precision_recall_fscore_support(yTest, predictions)
-#
-# def cross_validation(X,y,parts):
-#     scores = []
-#     for index
-
-# # do not uses this because hard to insert times and would like
-# # precision and recall out as wel
-# scores = cross_val_score(
-#     estimator=classifier,
-#     X=documents,
-#     y=labels,
-#     scoring=make_scorer(f1_score, average='macro'),
-#     cv=4,
-#     verbose=3
-# )
 
 predictions = cross_val_predict(
     estimator=classifier,
