@@ -20,7 +20,23 @@ parser = argparse.ArgumentParser(
 )
 
 parser.add_argument(
-    '--use_sentiment',
+    'train_file',
+    type=str,
+    help='file name of the training file',
+    metavar='training file'
+)
+
+parser.add_argument(
+    'test_file',
+    default=None,
+    nargs='?',
+    type=str,
+    help='file name of the test file',
+    metavar='test file'
+)
+
+parser.add_argument(
+    '-use_sentiment',
     default=False,
     type=bool,
     dest='use_sentiment',
@@ -30,7 +46,7 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    '--algo',
+    '-algo',
     default='bayes',
     type=str,
     dest='algo',
@@ -41,6 +57,7 @@ parser.add_argument(
 
 args = parser.parse_args()
 
+print(args)
 
 # This function takes a filename and a boolean that selects
 # whether the sentiment or topic labels are used.
@@ -94,18 +111,18 @@ if args.algo == 'bayes':
         [('vec', TfidfVectorizer(
             preprocessor = lemmatise,
             tokenizer = identity,
-            stop_words = 'english')
+            stop_words = 'english'
         )),
         ('cls', MultinomialNB(
             alpha=0.9,
             fit_prior=False
-        )])
+        ))])
 if args.algo == 'tree':
     classifier = Pipeline(
         [('vec', CountVectorizer(
             preprocessor = lemmatise,
             tokenizer = identity,
-            stop_words = 'english')
+            stop_words = 'english'
         )),
         ('cls', DecisionTreeClassifier(
          criterion='gini',
@@ -122,7 +139,7 @@ if args.algo == 'neighbour':
         [('vec', TfidfVectorizer(
             preprocessor = stem,
             tokenizer = identity,
-            stop_words = 'english')
+            stop_words = 'english'
         )),
         ('cls', KNeighborsClassifier(
             n_neighbors=49,
@@ -134,16 +151,24 @@ if args.algo == 'neighbour':
             n_jobs=4
         ))])
 
-documents, labels = read_corpus('trainset.txt', args.use_sentiment)
+if args.test_file == None:
+    documents, labels = read_corpus(args.train_file, args.use_sentiment)
 
-predictions = cross_val_predict(
-    estimator=classifier,
-    X=documents,
-    y=labels,
-    cv=4,
-    verbose=3
-)
+    predictions = cross_val_predict(
+        estimator=classifier,
+        X=documents,
+        y=labels,
+        cv=4,
+        verbose=3
+    )
 
-print(classification_report(labels, predictions, digits=4))
+    print(classification_report(labels, predictions, digits=4))
+else:
+    documentsTrain, labelsTrain = read_corpus(args.train_file, args.use_sentiment)
+    documentsTest, labelsTest = read_corpus(args.test_file, args.use_sentiment)
+    classifier.fit(documentsTrain, labelsTrain)
+    predictions = classifier.predict(documentsTest)
+
+    print(classification_report(labelsTest, predictions, digits=4))
 
 
