@@ -54,7 +54,7 @@ This study attempts to find the best way to classify reviews by topic. I will an
 
 \section{Data}
 
-The study uses a corpus of six thousand product reviews. Each review consists of a label indicating whether the review is positive or negative and a label indicating to which of the followings six topics it belongs: books, camera, dvd, health, music or software. The review also contains a file reference and the actual text of the review. The topic and sentiment labels are distributed almost equally across the corpus. About half of the reviews about a particular topic are labeled positive. Table ~\ref{tab:corpus} shows the counts for the labels in the corpus.
+The study uses a corpus of six thousand product reviews. Each review consists of a label indicating whether the review is positive or negative and a label indicating to which of the followings six topics it belongs: books, camera, dvd, health, music or software. The review also contains a file reference and the actual text of the review. The topic and sentiment labels are distributed almost equally across the corpus. About half of the reviews about a particular topic are labeled positive. Table~\ref{tab:corpus} shows the counts for the labels in the corpus.
 
 \begin{table}[ht]\footnotesize
 \caption{counts of topic and sentiment labels}
@@ -78,11 +78,11 @@ total & 6000 & 100.0 & 2968 & 48 & 3132 & 52 \\
 
 This study compares the performance of the Scikit-learn implementations of three classification algorithms, Multinomial Naive Bayes, decision tree and k-nearest neighbour. First I compare the performance of the algorithms using default parameters but with different representations of the documents that need to be classified. Then I evaluate the effect of tuning the parameters of the algorithms using the best performing document representation. In this way I limit the number of combinations that need to be evaluated. I do not investigate feature selection methods.
 
-I measure the performance in terms of precision, accuracy, f1-score and the time it takes to train and test the models using four-fold cross-validation. I use the cross-validation to predict all topic labels first and then I calculate the scores. The score I use in the evaluation is the weighted average of the scores for the prediction of each of the six labels. The duration is to time it takes for all four cross validation runs to complete training and predicting. The runs are run in parallel on a computer with 16 GB of RAM and a 2.6 GHz quad core Intel i7 processor.
+I measure the performance in terms of precision, accuracy, f1-score and the time it takes to train and test the models using four-fold cross-validation. I use the cross-validation to predict all topic labels first and then I calculate the scores. The score I use in the evaluation is the weighted average of the scores for the prediction of each of the six labels. The duration is the time it takes for all four cross validation runs to complete training and predicting. The runs are run in parallel on a computer with 16 GB of RAM and a 2.6 GHz quad core Intel i7 processor.
 
 \section{Optimising Representations}
 
-I compare twelve different representations. They are generated using either the TF-IDF or Count vectoriser from the Scikit-learn Python library. Both vectorisers can be used with or without lemmatisation or stemming and with or without the default stop word list for English included with the library. I use the \emph{PorterStemmer} and \emph{WordNetLemmatizer} from the Scikit-learn library. The \emph{WordNetLemmatizer} requires that the word is tagged as a noun, verb, adjective or adverb. I use the NLTK POS-tagger and then map the resulting Penn Treebank POS-tags to these four categories.
+I compare twelve different representations. They are generated using either the tf-idf or count vectoriser from the Scikit-learn Python library. Both vectorisers can be used with or without lemmatisation or stemming and with or without the default stop word list for English included with the library. I use the \emph{PorterStemmer} and \emph{WordNetLemmatizer} from the Scikit-learn library. The \emph{WordNetLemmatizer} requires that the word is tagged as a noun, verb, adjective or adverb. I use the NLTK POS-tagger and then map the resulting Penn Treebank POS-tags to these four categories.
 
 \begin{table*}[ht]\footnotesize
 \centering
@@ -154,9 +154,11 @@ count & none & none & 4.3s & 0.4361 & 0.4232 & 0.4158 \\
 \label{tab:repres-neighbour}
 \end{table*}
 
-Table~\ref{tab:repres-neighbour} lists the results for the k-nearest neighbour classifier. It shows the largest difference in the f1-score for the different representations of the three algorithms. The highest score, 0.8042 is nearly twice the lowest score of 0.4158. The tf-idf vectorisation scores higher than the count vectorisation. The effect of the stop words is less clear than was the case for the other algorithms. Still the two highest scores make use of the stop word list filter. Both vectorisations perform better with the Porter stemmer than with the lemmatisation. The best performing vectorisation uses the tf-idf statistic on the stemmed document without stop words and it will be used for the parameter tuning experiments.
+Table~\ref{tab:repres-neighbour} lists the results for the k-nearest neighbour classifier. It shows the largest difference in the f1-score for the different representations of the three algorithms. The highest score, 0.8042 is nearly twice the lowest score of 0.4158. The tf-idf vectorisation scores higher than the count vectorisation. The effect of the stop words is less clear than was the case for the other algorithms. Still the two highest scores make use of the stop word list filter. Both vectorisations perform better with the Porter stemmer than with lemmatisation. The best performing vectorisation uses the tf-idf statistic on the stemmed document without stop words and it will be used for the parameter tuning experiments.
 
-All three algorithms perform better when the vector representation of the review documents do not contain any of the stop words in the list included with the Scikit-learn library. Clearly these words or less relevant for classification. The optimal representation for Naive Bayes, lemmatised and using the tf-idf statistic, is what I would expect given that these measure seem to be a more accurate representation of the features of a document. However K-nearest neighbour works better with the documents stemmed and the decision tree works better with the count vectoriser. I cannot explain this result, but would like to note again that the differences is the scores are very small indeed. Comparing the duration of the training and testing without any preprocessing and with default settings (see table~\ref{tab:repres-duration}) shows that Multinomial Naive Bayes is 3 to 4 times faster than a decision tree and twice as fast as k-nearest neighbour while showing the highest scores. However stemming adds about 20 seconds and lemmatising about two and a half minutes. So when using preprocessing the differences between the durations for the algorithms does not seem a relevant factor in preferring one over the other.
+All three algorithms perform better when the vector representation of the review documents do not contain any of the stop words in the list included with the Scikit-learn library. Clearly these words are less relevant for classification. The optimal representation for Naive Bayes, lemmatised and using the tf-idf statistic, is what I would expect given that these measure seem to be a more accurate representation of the significant features of a document, because this representation takes into account words that are simply more frequent irrespective of topic and handles morphological differences that I would not expect to be relevant for the semantics. However K-nearest neighbour works better with the documents stemmed and the decision tree works better with the count vectoriser. I cannot explain this result, but would like to note again that the differences is the scores are very small indeed and so perhaps they are not significant enough to draw any conclusions from them.
+
+Comparing the duration of the training and testing without any preprocessing and with default settings (see table~\ref{tab:repres-duration}) shows that Multinomial Naive Bayes is 3 to 4 times faster than a decision tree and twice as fast as k-nearest neighbour while showing the highest scores. However stemming adds about 20 seconds and lemmatising about two and a half minutes. So when using preprocessing the differences between the durations for the algorithms does not seem a relevant factor in preferring one over the other.
 
 \begin{table}[ht]\footnotesize
 \centering
@@ -198,7 +200,7 @@ $\alpha$  & fit prior & duration & precision & recall & f1-score \\
 \label{tab:tune-bayes}
 \end{table}
 
-The Multinomial Naive Bayes algorithm takes two parameters, one for value use in smoothing and one to select wether or not to fit using prior probabilities based on the data. Because the data set has a nearly equal distribution over the topic labels, calculating the prior probabilities does not improve the scoring. Not calculating the priors actually consistently slightly improves the accuracy. Using a smoothing value of 1 is called Laplace and a value between 0 and 1 as Lidstone smoothing. One and 0.5 are the most common values used. Scores are higher using a smoothing close to one with an interesting exception for 0.5. The highest score uses a value of 0.9. Also here the differences are less than one percent. The scores are listed in Table~\ref{tab:tune-bayes}
+The Multinomial Naive Bayes algorithm takes two parameters, one for the value used in smoothing and one to select whether or not to fit using prior probabilities based on the data. Because the data set has a nearly equal distribution over the topic labels, calculating the prior probabilities does not improve the scoring. Not calculating the priors actually consistently slightly improves the accuracy. Using a smoothing value of 1 is called Laplace and a value between 0 and 1 Lidstone smoothing. 1 and 0.5 are the most common values used. Scores are higher using a smoothing close to one with an interesting exception for 0.5. The highest score uses a value of 0.9. Also here the differences are less than one percent. The scores are listed in Table~\ref{tab:tune-bayes}.
 
 
 \begin{table}[ht]\footnotesize
@@ -216,7 +218,7 @@ gini & random & log2 & 0.4049 \\
 \label{tab:tune-tree-split}
 \end{table}
 
-The decision tree classification algorithm supports several ways of influencing how the tree is constructed. You can choose if the algorithm decides on the best split based on the information gain or Gini impurity. You can then determine of that measure is used to alway select the best split or to select the best of a number of random splits. Thirdly you can provide different measures to only consider part of the available feature for the splitting. I ran a few experiments evaluating these parameters. Pre-sorting was not available as an option, because we are using a sparse count vectorisation. Gini appears to perform slightly better than information gain. Random split evaluation can improve performance, but does not give a stable result and makes it hard to evaluate the effect of tuning the parameters for pruning the tree. Not including all the features sharply decreases performance. For the rest of the tuning I use the Gini criterion to find the best split considering all the features. The results are listed in table~\ref{tab:tune-tree-split}
+The decision tree classification algorithm supports several ways of influencing how the tree is constructed. You can choose if the algorithm decides on the best split based on the information gain or Gini impurity. You can then determine if that measure is used to alway select the best split or to select the best of a number of random splits. Thirdly you can provide different measures to only consider part of the available feature for the splitting. I ran a few experiments evaluating these parameters. Pre-sorting was not available as an option, because we are using a sparse count vectorisation. Gini appears to perform slightly better than information gain. Random split evaluation can improve performance, but does not give a stable result and makes it hard to evaluate the effect of tuning the parameters for pruning the tree. Not including all the features sharply decreases performance. For the rest of the tuning I use the Gini criterion to find the best split considering all the features. The results are listed in table~\ref{tab:tune-tree-split}.
 
 \begin{table*}[ht]\footnotesize
 \centering
@@ -246,13 +248,13 @@ max depth & min for split & min for leaf & max leaves & accuracy & recall & f1-s
 \end{table*}
 
 
-Pruning the decision tree is the process of reducing the number of splits to make the tree less sensitive to slightly different input values (reduce overfitting). We can set how many times the tree may split, the least amount of samples required for a split, the least amount of samples that should be in a leaf of the tree and the maximum number of leaf nodes. In addition to these there are some settings to handle uneven distribution of samples.
+Pruning the decision tree is the process of reducing the size of the tree to make the tree less sensitive to slightly different input values (reduce overfitting). We can set how many times the tree may split, the least amount of samples required for a split, the least amount of samples that should be in a leaf of the tree and the maximum number of leaf nodes. In addition to these there are some settings to handle an uneven distribution of samples.
 
-Limiting the depth of the tree improves accuracy but worsens recall as can be seen in table~\ref{tab:tune-tree-prune}. A balance between the two leading to the highest f1 score is reached when limiting the depth to 50. Looking at the minimum number of samples that should be available to make a split you can see that for a large number of samples, ten percent in the table, leeds to a higher accuracy, but lower recall. Tuning the required sample size for ten and below shows an improvement in both measures simultaneously. The minimum number of samples required in a leaf node shows the best result for the default value of one while the related measure of limiting the number of leaves does show a positive effect at a maximum of 150 leaves.
+Limiting the depth of the tree improves accuracy but worsens recall as can be seen in table~\ref{tab:tune-tree-prune}. A balance between the two leads to the highest f1 score when limiting the depth to 50. Looking at the minimum number of samples that should be available to make a split you can see that for a large number of samples, ten percent in the table, leeds to a higher accuracy, but lower recall. Tuning the required sample size for ten and below shows an improvement in both measures simultaneously reaching an optimum at 5. The minimum number of samples required in a leaf node shows the best result for the default value of 1 while the related measure of limiting the number of leaves does show a positive effect at a maximum of 150 leaves.
 
 I expected a similar accuracy - recall tradeoff in parameters limiting the width of the tree as I found for the parameter limiting the depth of the tree, but found none. Perhaps these effects would be clearer if there was no limit set on the depth; something I could evaluate at another time. The duration of the experiments does not really vary with tuning the parameters. It is about three minutes. However using a best random split is about half a minute faster.
 
-The k-nearest neighbours algorithm allows for tuning based on the number of neighbours in the vector space that are looked at to determine the classification. The weight parameter specifies it all neighbours are counted equally in determining the label or if closer neighbours are counted more heavily. Then there are several ways to measure the distance between neighbours. I try Euclidean and Manhattan distance, Minkowski distance with a power of 2 and 1 respectively. Lastly it is possible to specify the way in which the algorithm searches for neighbours. Although I use tf-idf vectors I can only use brute force search to find the nearest neighbours. The faster \emph{KDTree} and \emph{BallTree} algorithms give an error about sparse features.
+The k-nearest neighbours algorithm allows for tuning based on the number of neighbours in the vector space that are looked at to determine the classification. The weight parameter specifies if all neighbours are counted equally in determining the label or if closer neighbours are counted more heavily. Then there are several ways to measure the distance between neighbours. I try Euclidean and Manhattan distance, a Minkowski distance with a power of 2 and 1 respectively. Lastly it is possible to specify the way in which the algorithm searches for neighbours. Although I use tf-idf vectors I can only use brute force search to find the nearest neighbours. The faster \emph{KDTree} and \emph{BallTree} algorithms give an error about sparse features.
 
 \begin{figure}
   \caption{plot of accuracy and f1-score for different values of K}
@@ -316,7 +318,7 @@ The k-nearest neighbours algorithm allows for tuning based on the number of neig
 \end{tikzpicture}
 \end{figure}
 
-The results for different values of \emph{k} using the default settings for the other parameters are drawn in figure~\ref{fig:tuning-knearest-k}. There is no clear increase of the duration for a larger number of neighbours. The plot shows that for a larger number of \emph{k} the accuracy increases initially but the rate of increase becomes smaller and smaller. There is a remarkable spike of accuracy at \emph{k} equals 63. However the recall starts the go down after \emph{k} becomes larger than 55. The optimum in terms of the f1-score is achieved with \emph{k} at 49. Increasing the number of \emph{k} increases the variance of the system, but decreases its bias and as a result the recall of the system starts to go down. The model has been overfitted.
+The results for different values of \emph{k} using the default settings for the other parameters are plotted in figure~\ref{fig:tuning-knearest-k}. There is no clear increase of the duration for a larger number of neighbours. The plot shows that for a larger number of \emph{k} the accuracy increases initially but the rate of increase becomes smaller and smaller. There is a remarkable spike of accuracy at \emph{k} equals 63. However the recall starts the go down after \emph{k} becomes larger than 55. The optimum in terms of the f1-score is achieved with \emph{k} at 49. Increasing the number of \emph{k} increases the variance of the system, but decreases its bias and as a result the recall of the system starts to go down; the model has been overfitted.
 
 \begin{table}[ht]\footnotesize
 \centering
@@ -332,20 +334,19 @@ distance & 1 & 3.4min & 0.6644 \\
 \label{tab:tuning-knearest-dist}
 \end{table}
 
-The table~\ref{tab:tuning-knearest-dist} shows the scores for the uniform and distance related weighting (closer is more important) of the labels of the neighbours to determine the class as well as for the Euclidean and Manhattan distance. The distance weighting performs better than the uniform one and the Manhattan distance performs remarkably better than Euclidean distance. This is to be expected because the feature vector has a high number of dimensions and a higher Minkowski power puts more emphasis on the largest difference between any two dimensions while a lower power takes more of the dimensions into account. Therefore the Manhattan distance ofter works better than Euclidean distance for high dimensionality vectors.
+Table~\ref{tab:tuning-knearest-dist} shows the scores for the uniform and distance related weighting (closer is more important) of the labels of the neighbours to determine the class as well as for using the Euclidean and the Manhattan distance. The distance weighting performs better than the uniform one and the Manhattan distance performs remarkably better than Euclidean distance. This is to be expected because the feature vector has a high number of dimensions and a higher Minkowski power puts more emphasis on the largest difference between any two dimensions while a lower power takes more of the dimensions into account. Therefore the Manhattan distance ofter works better than Euclidean distance for high dimensionality vectors.
 
 \section{Discussion/Conclusion}
 
-I explored the tuning options available for the given algorithms and document representation. I am surprised to learn how well the Naive Bayes implementations works for this particular task. It was the fastest, easiest to configure and achieved the highest score. The influence of the different parameters is often very small. It would be interesting to extend this exploration to include feature selection techniques to evaluate how far you can go in improving the representation of the data set (feature engineering) for a particular classifier.
+I explored the tuning options available for the given algorithms and document representation. I am surprised to learn how well the Naive Bayes implementations works for this particular task given that the approach is less complex and makes a strong assumption about the independence of features. It was the fastest, easiest to configure and achieved the highest score. The influence of tuning the different parameters is often very small, but careful preparation of the data representation contributes clearly to a better score. It would be interesting to extend this exploration to include feature selection techniques to evaluate how far you can go in improving the representation of the data set (feature engineering) for a particular classifier.
 
 \section{Answers to additional questions}
 
 \subsection{decision tree theory}
 
-To build the decision tree for the given example with the least amount of nodes you need to branch on the test with the highest information gain first. Information gain is the expected reduction in entropy for the \emph{edible} label in the example for sorting on either the \emph{color}, \emph{size} or \emph{shape} labels. The information gain is calculated by calculating the entropy for the parent set and subtracting the weighted average entropy of the child sets resulting from splitting on the label. The entropy of a set is calculated by $\sum\limits_i - p_i \log_2 p_i $ where $p_i$ is the probability of an element being in class \emph{i} modeled as the portion of the elements in the set being of class \emph{i}. The information gain achieved by sorting on the \emph{colour, size or shape} features is listed in table~\ref{tab:gain}. Sorting on the \emph{size} first achieves the highest gain and therefore this is what should be done first.
+To build the decision tree for the given example with the smallest number of nodes you need to branch on the test with the highest information gain first. Information gain is the expected reduction in entropy for the \emph{edible} label in the example for sorting on either the \emph{color}, \emph{size} or \emph{shape} labels. The information gain is calculated by calculating the entropy for the parent set and subtracting the weighted average entropy of the child sets resulting from splitting on the label. The entropy of a set is calculated by $\sum\limits_i - p_i \log_2 p_i $ where $p_i$ is the probability of an element being in class \emph{i} modeled as the portion of the elements in the set being of class \emph{i}. The information gain achieved by sorting on the \emph{colour, size or shape} features is listed in table~\ref{tab:gain}. Sorting on the \emph{size} first achieves the highest gain and therefore this is what should be done first.
 
-\begin{table}[h]\footnotesize
-\label{tab:gain}
+\begin{table}[ht]\footnotesize
 \begin{tabular}{ l r r r r r }
 & \multicolumn{4}{c}{entropy} & \\
 \cline{2-5}
@@ -356,12 +357,12 @@ size & 0.9886 & 0.8112 & 0.9544 & 0.8828 & 0.1058 \\
 shape & 0.9886 & 1 & 0.8112 & 0.9528 & 0.0358 \\
 \end{tabular}
 \caption{information gain on the first split with respect to the edible label}
+\label{tab:gain}
 \end{table}
 
 
 
-\begin{table}[h]\footnotesize
-\label{tab:gain-small}
+\begin{table}[ht]\footnotesize
 \begin{tabular}{ l r r r r r }
 & \multicolumn{4}{c}{entropy} & \\
 \cline{2-5}
@@ -371,10 +372,10 @@ colour & 0.8112 & 0.6500 & 1 & 0.7375 & 0.0737 \\
 shape & 0.8112 & 0.9182 & 0 & 0.6887 & 0.1225 \\
 \end{tabular}
 \caption{information gain on the \emph{small} branch with respect to the edible label}
+\label{tab:gain-small}
 \end{table}
 
-\begin{table}[h]\footnotesize
-\label{tab:gain-large}
+\begin{table}[ht]\footnotesize
 \begin{tabular}{ l r r r r r }
 & \multicolumn{4}{c}{entropy} & \\
 \cline{2-5}
@@ -384,6 +385,7 @@ colour & 0.9544 & 0.9852 & 0 & 0.8620 & 0.0923 \\
 shape & 0.9544 & 1 & 0.9182 & 0.9387 & 0.0157 \\
 \end{tabular}
 \caption{information gain on the \emph{large} branch with respect to the edible label}
+\label{tab:gain-large}
 \end{table}
 
 \begin{figure*}
@@ -428,7 +430,7 @@ shape & 0.9544 & 1 & 0.9182 & 0.9387 & 0.0157 \\
 \end{tikzpicture}
 \end{figure*}
 
-As can be seen in the tables ~\ref{tab:gain-small} and ~\ref{tab:gain-large} for the items labeled \emph{small} the next split with the most gain would be by \emph{shape} and for the items labeled large it would be \emph{colour}. The resulting tree is shown in figure ~\ref{fig:tree}. The leaf for items with the features \emph{yellow,  small, round} has a $\frac{4}{5}$ probability of being edible, but a $\frac{1}{5}$ probability of not being edible. There are no features to distinguish between them. The leaf was labeled with yes, because of the higher probability. The leaf for items with the features \emph{yellow,  large, round} was treated similarly labeling such items as not edible, although there is a $\frac{1}{5}$ probability that the item is edible. There is no item with the features \emph{green, large, round} and no branch for those features is included in the tree.
+As can be seen in the tables~\ref{tab:gain-small} and~\ref{tab:gain-large} for the items labeled \emph{small} the next split with the most gain would be by \emph{shape} and for the items labeled large it would be \emph{colour}. The resulting tree is shown in figure ~\ref{fig:tree}. The leaf for items with the features \emph{yellow,  small, round} has a $\frac{4}{5}$ probability of being edible, but a $\frac{1}{5}$ probability of not being edible. There are no features to distinguish between them. The leaf was labeled with yes, because of the higher probability. The leaf for items with the features \emph{yellow,  large, round} was treated similarly labeling such items as not edible, although there is a $\frac{1}{5}$ probability that the item is edible. There is no item with the features \emph{green, large, round} and no branch for those features is included in the tree.
 
 \bibliography{eacl2017}
 \bibliography{yourbibfile}
