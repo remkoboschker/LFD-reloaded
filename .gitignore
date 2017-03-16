@@ -1,3 +1,5 @@
 /venv
 .DS_Store
 /Resources
+/word2vec
+*.zip
