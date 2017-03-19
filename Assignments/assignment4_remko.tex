@@ -178,9 +178,90 @@ Classification accuracy: 0.32756489493201485
 
 avg / total       0.11      0.33      0.16      8899
 
+4.2.2
+
+lr      pen   type  f1  acc
+constant    none        5   2     0.80  0.81
+constant    none        5   6     0.79  0.79
+constant    l2          5   2     0.88  0.88
+constant    l2          5   6     0.76  0.76
+constant    l1          5   2     0.88  0.88
+constant    l1          5   6     0.78  0.78
+constant    elasticnet  5   2     0.78  0.78
+constant    elasticnet  5   6     0.67  0.66
+optimal     none        5   2     0.90  0.90
+optimal     none        5   6     0.79  0.79
+optimal     l1          5   2     0.82  0.83
+optimal     l1          5   6     0.62  0.62
+invscaling  none        5   2     0.91  0.91
+invscaling  none        5   6     0.78  0.77
+invscaling  l1          5   6     0.80  0.80
+invsclaing  l1          5   2     0.86  0.86
+invscaling  none        10  2     0.74  0.76
+constant    none        10  2     0.91  0.91
+constant    none        10  6     0.77  0.76
+constant    none        25  2     0.88  0.88
+constant    none        25  6     0.76  0.76
+optimal     none        10  2     0.72  0.76
+constant    l1          10  2     0.90  0.90
+constant    l1          25  2     0.81  0.83
+constant    l2          10  2     0.87  0.87
+optimal     l1          10  2     0.91  0.91
+optimal     l1          25  2     0.88  0.88
+invscaling  l1          10  2     0.86  0.86
+invsclaing  l1          25  2     0.89  0.89
+invsclaing  l1          50  2     0.89  0.89
+invscaling  l1          50  6     0.76  0.76
+invscaling  l1          25  6     0.76  0.75
+invscaling  l1          10  6     0.72  0.72
+
+4.2.3
+
+\begin{table}[ht]\footnotesize
+\caption{test cases for generalisation}
+\label{tab:generalisation}
+\begin{tabular}{ l l l }
+test & label & examples \\
+\hline
+2030s & DATA & 1970s, 60s, '80s, mid-30s \\
+Lenovo & ORG & IBM, Microsoft, Apple, Motorola \\
+Roosevelt & PERSON & Truman, Nixon, Eisenhower \\
+\end{tabular}
+\end{table}
+
+All three test cases for generalisation were correctly classified.
+
+4.2.4
+
+\begin{table}[ht]\footnotesize
+\caption{counts of topic and sentiment labels}
+\label{tab:corpus}
+\begin{tabular}{ r r r r r r r }
+act/pred & CARD & DATE &  GPE & LOC & ORG  & PERSON \\
+\hline
+  CARD   & 1178 &    1 &   10 &   2 &  115 &      5 \\
+  DATE   &   46 &  664 &    1 &   0 &  306 &      0 \\
+   GPE   &    3 &    1 & 2283 &  50 &  528 &     50 \\
+   LOC   &    1 &    0 &    6 & 147 &   17 &      6 \\
+   ORG   &   42 &   24 &  232 &  49 & 1476 &    249 \\
+PERSON   &   18 &    4 &  107 &  21 &  236 &   1021 \\
+\end{tabular}
+\end{table}
+
+  CARD out of 1311 cardinal 115 0.09 are predicted as org. 133 0.10
+  DATE out of 1017 date 46 0.05 are card and 306 0.30 are org. tot 353 0.35
+   GPE out of 2915 GPE 50 0.02 are loc, 528 0.18 are org and 50 0.02 are person tot 632 0.22
+   LOC out of 177 loc 6 0.03 are gpe or person and 17 0.10 are ORG 30 0.17
+   ORG out of 2072 org are 42 card 0.02, 24 0.01 date, 232 gpe 0.11, 49 0.02 loc and 249 0.12 person tot 596 0.28
+PERSON out of 1407 pers are 18 0.01 card, 107 0.07 gpe, 21 0.01 loc, 236 0.17 org. tot 386 0.27
+
+Both cardinals and dates are often mistakenly classified as organisations, 9 and 30 percent respectively. The same goes for geopolitical entities and persons, 18 and 17 percent. Organisations on the other hand are mistakenly classified as persons or geopolitical entities, 12 and 11 percent, but not as cardinals or dates, 2 and 1 percent. Persons are also mistakenly classified as geopolitical entities, 7 percent of the persons.
 
 
 
+
+
+linear classifier location in vectorspace
 
 \section{Data}
 

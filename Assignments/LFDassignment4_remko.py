@@ -1,7 +1,7 @@
 import numpy, pickle, os
 from sys import argv
 from sklearn.linear_model import Perceptron, SGDClassifier
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
 # Read in the NE data, with either 2 or 6 classes
 def read_corpus(corpus_file, binary_classes):
@@ -56,15 +56,29 @@ if __name__ == '__main__':
     Ytrain = Y[:split_point]
     Xtest = X[split_point:]
     Ytest = Y[split_point:]
+    # Xtrain = X
+    # Ytrain = Y
+    # Xtest = vectorizer(['2030s', 'Lenovo', 'Roosevelt'],embeddings)
+    # Ytest = ['DATE', 'ORG', 'PERSON']
 
     # Initialize the perceptron
-    perceptron = SGDClassifier(loss='perceptron', eta0 = 1.0, verbose = 1, random_state = 92, n_iter = 5, penalty='none', learning_rate='constant')
+    perceptron = SGDClassifier(
+        loss='perceptron',
+        eta0 = 1.0,
+        verbose = 1,
+        random_state = 92,
+        n_iter = 10,
+        penalty='none',
+        learning_rate='constant',
+        n_jobs=4
+    )
     # Train the perceptron
     perceptron.fit(Xtrain, Ytrain)
     # Make predictions for the test data
-    # Yguess = perceptron.predict(Xtest)
+    Yguess = perceptron.predict(Xtest)
     # baseline
-    labelDist = ['LOC'] + (len(Xtest) // 6 + 1) * ['GPE', 'CARDINAL', 'PERSON', 'DATE', 'ORG', 'GPE' ]
-    Yguess = labelDist[:len(Xtest)]
+    # labelDist = ['LOC'] + (len(Xtest) // 6 + 1) * ['GPE', 'CARDINAL', 'PERSON', 'DATE', 'ORG', 'GPE' ]
+    # Yguess = labelDist[:len(Xtest)]
     print('Classification accuracy: {0}'.format(accuracy_score(Ytest, Yguess)))
     print(classification_report(Ytest, Yguess))
+    print(confusion_matrix(Ytest, Yguess))
