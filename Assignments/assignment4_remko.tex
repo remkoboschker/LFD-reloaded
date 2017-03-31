@@ -34,7 +34,7 @@
 
 
 
-\title{Learning from Data - Assignment 3 - Support Vector Machines and K-Means}
+\title{Learning from Data - Assignment 4 - Perceptrons and Word Embeddings}
 
 \author{Remko Boschker \\
   master student of information science at the Rijks Universiteit Groningen \\
@@ -45,177 +45,163 @@
 \begin{document}
 \maketitle
 \begin{abstract}
-
-This study does unsupervised clustering of product reviews with topic and sentiment labels and texts by different authors using the k-means algorithm. It tries to steer binary clustering towards either sentiment or topic labels to no avail. Six-way clustering of the reviews achieves a Rand Index of 0.0742 and V-Measure of 0.0724 for topics; binary clustering a RI of 0.4904 for topics and a RI of 0.0205 for sentiment. The author clustering achieves a RI of 0.6725 and a VM of 0.5687 using word uni- and bigrams only. This study also does a supervised binary classification of the product review sentiments using a support vector machine. It tunes the algorithm on the choice of linear or radial kernel and of the feature set. It achieves the highest f1-score of 0.8531 using a linear kernel with a 6 character n-gram and the output from the k-means clustering as features.
-
+In the following I use the word2vec toolkit and evaluate some of my findings. I also use word embeddings as features for a perceptron classifier. I develop a baseline classifier for comparison and tune the parameters of the algorithm. The perceptron performs a binary classification at an f-1 and accuracy score of 0.91 and a six-way classification at scores of 0.80. The parameter tuning shows that the parameters settings are interrelated and I found no clear optimum.  Finally I look into the misclassifications and find items are often mis-categorised as organisations possibly because they occur in many contexts and a perceptron is a linear classifier.
 \end{abstract}
 
 \section{Introduction}
+The use of word embeddings in natural language processing tasks has become successful due to the availability of large amounts of data, efficient pre-training of representations and its effectiveness. In the following experiments I first use the word2vec toolkit to look at words with similar embeddings and to find analogies between sets of words. Secondly I combine word embeddings as features with a perceptron classifier to categorise named entities.
 
-4.1.1 five unexpected results from word2vec
-Java
-Jakarta, J2EE
-Jumpin Juice, a coffee and juice bar franchise
+\section{Word2vec}
 
-Python
-snake, programming
-only reptiles,
+I use the word2vec toolkit to experiment with word embeddings. The toolkit uses the \emph{GoogleNews-vectors-negative300bin} pre-trained word embedding. First I use the distance tool with five words that have strong connotations or more than one meaning. I discuss any unexpected results and go a little into word sense ambiguity. Next I use the analogy tool to evaluate word2vec ability to capture analogies.
 
-Dutch
-Netherlands, Belgian, German etc.
-volkskrant, telegraaf, analyst_Pieter_Kulsen, trader, Edmond_Messchaert_spokesman IS UN
+The distance tool lists the forty words that are closest to the word entered in terms of the cosine distance between vector representations of the words embeddings. Below I list and discuss the results for five words.
 
-economy
-job_rate, gross_domestic_product, recession
-Wehbey, theeconomy, EFG_Hermes_Ziada; large investment firm
+\paragraph{Java}
+I expected there to be words related to the programming language and the Indonesian island. And there were for instance \emph{Jakarta} and \emph{J2EE}. I did not expect to find \emph{Jumpin Juice}, a coffee and juice bar franchise. The franchise advertises a lot with the word \emph{Java} as a reference to coffee.
 
-New York
-Manhattan, Brooklyn, Long Island
-RBI_ARodriguez, STRIKEOUTS_Mussina, STOLEN_BASES_Reyes; baseball
-Hiroko_Masuike New York times photographer
-By_PENELOPE_GREEN New York times journalist
+\paragraph{Python}
+For the word \emph{python} I expected to also find word related to the snake and to the programming language. But I only found names of snakes and one or two other reptiles.
 
-4.1.2.1
-Polysemous words are words that have multiple but related meanings.
-Man, mole, bank, point, roll, wave
+\paragraph{Dutch}
+I expected to find words typically associated with being \emph{Dutch} (at least in an American news corpus) such as cheese and tulips and coffeeshops. But I found mostly other nationalities such as \emph{Belgian, German} and \emph{Netherlands}. Also there were two Dutch newspapers \emph{Volkskrant} and \emph{Telegraaf}. Probably because they were quoted in the corpus. And a financial analyst and a Dutch spokesman for the IS UN taskforce \emph{analyst\_Pieter\_Kulsen} and emph{Edmond\_Messchaert\_spokesman}.
 
-Homonymic words are words that have multiple unrelated meanings.
-arm, bank, match, iron, bear
+\paragraph{economy}
+Besides the expected terminlogy such as \emph{job\_rate, gross\_domestic\_product, recession}, I found an apparently very common  spelling error \emph{theeconomy}, a large investment firm \emph{EFG\_Hermes\_Ziada} and the mysterious \emph{Wehbey}, the last name of various government officials in the field of economics in Central and South America.
 
-4.1.2.2
-word sense disambiguation is the problem in natural language processing of selecting which of a words sense is the one intended in a sentence when there is more than one. Word embeddings are not a good feature for this task, because although the embeddings show words related to the different senses of a word it does not distinguish between them. And therefore given a context you might find words that are also in the embedding, but you have no way derive the particular sense from that.
+\paragraph{New York}
+For \emph{New York} I found the five boroughs \emph{Manhattan, Brooklyn, Queens, Bronx, Staten Island} and \emph{Long Island} as expected. I also found baseball related terms \emph{RBI\_ARodriguez, STRIKEOUTS\_Mussina, STOLEN\_BASES\_Reyes} to do with the baseball team the New York Yankees. Unexpectedly I also found a New York Times photographer and journalist \emph{Hiroko\_Masuike, By\_PENELOPE\_GREEN}. These are probably the result of the news based corpus used for training.
+\\
 
-4.1.2.3
-The Google News vectors show only words related to cookie as a baked good such as peanut_butter_cookie, cupcake, oatmeal_cookie. The 'vectors.bin' also shows words related to the sense of a cookie that is set in a webbrowser such as url, server, and password. Apparently the vectors.bin vectors were trained on a corpus containing relatively more texts about internet and web-browser related content.
+In general it is to be expected that the embeddings for a particular word reflect the different meanings of a word. Whereas polysemous words for example \emph{man, mole, bank, point, roll, wave} can be expected to have similar embeddings because these are words that have multiple but related meanings. For homonymic words such as \emph{arm, bank, match, iron, bear} the different meanings are not related and different groups of related terms can be discerned.
 
-4.1.3
-France Hollande Germany Schröder
-France Hollande Bolivia Chavez
-Bolivia Chavez Spain Zapatero
-Spain Zapatero Netherlands Balkenende
--- beetje gedateerd
+Word sense disambiguation is the problem in natural language processing of selecting which of a words sense is the one intended in a sentence when there is more than one. Word embeddings are not a good feature for this task, because although the embeddings show words related to the different senses of a word it does not distinguish between them. And therefore given a context you might find words that are also in the embedding, but you have no way to derive the particular sense from that.
 
-4.2.1
+Also the word senses present in an embedding is influenced by the corpus uses for training the embedding. For instance the Google News vectors shows only words related to \emph{cookie} as a baked good such as \emph{peanut\_butter\_cookie, cupcake, oatmeal\_cookie}. The alternate 'vectors.bin' training file also shows words related to the sense of a \emph{cookie} that is set in a webbrowser such as \emph{url, server, and password}. Apparently the vectors.bin vectors were trained on a corpus containing relatively more texts about internet and web-browser related content.
 
-CARDINAL 5291
-GPE 11392
-PERSON 5955
-DATE 4213
-ORG 8131
-LOC 613
-location 12005
-non-location 23.590
-tot 35595
+I also use the analogy tool. This tool can given three term find an analogues fourth by adding the first two vectors and subtracting the third. For instance $man + king - woman = queen$. I gave it a few tries before I found some relations that worked. For instance $grass + green - roses$ did not equal $red$.
+The \emph{president/prime-minister} and \emph{country} relation works well although the corpus is a bit dated.
+\begin{itemize}
+\item[] France Hollande Germany Schr\"{o}der
+\item[] France Hollande Bolivia Chavez
+\item[] Bolivia Chavez Spain Zapatero
+\item[] Spain Zapatero Netherlands Balkenende
+\end{itemize}
 
-Labeling every third items as location
-Classification accuracy: 0.5568041352961007
-              precision    recall  f1-score   support
+I expected \emph{sporter} and \emph{sport} to be an easy analogy. But when trying \emph{Kramer skating Armstrong}, I only found cycling in third place. As it turns out there is also a skateboarder and another ice skater named \emph{Armstrong} accounting for first and second place.
 
-    LOCATION       0.36      0.34      0.35      3092
-NON-LOCATION       0.66      0.67      0.66      5807
+\begin{itemize}
+\item[] Kramer skating Armstrong skater
+\item[] Messi Soccer Nadal tennis
+\item[] Nadal tennis Cruijff soccer
+\end{itemize}
 
- avg / total       0.55      0.56      0.55      8899
+A third relation worked a expected, the one between a make of car and the country it was (originally) made.
 
-Labelling every items as NON-LOCATION
-Classification accuracy: 0.6525452298011013
-/usr/local/lib/python3.6/site-packages/sklearn/metrics/classification.py:1113: UndefinedMetricWarning: Precision and F-score are ill-defined and being set to 0.0 in labels with no predicted samples.
-  'precision', 'predicted', average, warn_for)
-              precision    recall  f1-score   support
+\begin{itemize}
+\item[] Fiat Italy Peugeot France
+\item[] Citroen France Mercedes Germany
+\item[] Opel Germany Volvo Sweden
+\end{itemize}
 
-    LOCATION       0.00      0.00      0.00      3092
-NON-LOCATION       0.65      1.00      0.79      5807
+\section{Perceptron}
 
- avg / total       0.43      0.65      0.52      8899
+The following experiments use a stochastic gradient descent algorithm to implement a perceptron classifier using word embeddings as features. First I look at the data, implement and evaluate a baseline system. Then I try to tune the parameters of the algorithm. Next I investigate if the classifier generalises well to classify names that are similar to ones in the training data, but are new. Lastly I evaluate misclassifications by inspecting the confusion matrix.
 
-perceptron
-Classification accuracy: 0.8115518597595236
-              precision    recall  f1-score   support
+\subsection{Data}
 
-    LOCATION       0.84      0.56      0.67      3092
-NON-LOCATION       0.80      0.94      0.87      5807
+\begin{table}[ht]
+  \caption{category distribution for the named entity list}
+  \label{tab:ne-cats}
+  \begin{tabular}{ l r r }
+    label & count & percentage \\
+    \hline
+    CARDINAL     &  5291 &  14.9\% \\
+    GPE          & 11392 &  32.0\% \\
+    PERSON       &  5955 &  16.7\% \\
+    DATE         &  4213 &  11.9\% \\
+    ORG          &  8131 &  22.8\% \\
+    LOC          &   613 &   1.7\% \\
+    location     & 12005 &  33.7\% \\
+    non-location & 23590 &  66.3\% \\
+    tot          & 35595 & 100.0\% \\
+  \end{tabular}
+\end{table}
 
- avg / total       0.82      0.81      0.80      8899
+The following experiments use a list of 35595 named entities labeled with a category. Table ~\ref{tab:ne-cats} lists the distribution of the categories. They also use a binary file containing a Python dictionary containing 50-dimension word vectors representing word embeddings taken from https://nlp.stanford.edu/projects/glove/.
 
-perceptron 6 way
-Classification accuracy: 0.7924485897291831
-             precision    recall  f1-score   support
+\subsection{Baseline}
 
-   CARDINAL       0.90      0.91      0.91      1311
-       DATE       0.91      0.92      0.91      1017
-        GPE       0.88      0.81      0.84      2915
-        LOC       0.79      0.90      0.84       177
-        ORG       0.60      0.75      0.66      2072
-     PERSON       0.79      0.61      0.69      1407
+\begin{table}[ht]\footnotesize
+  \caption{results for baseline systems for classification}
+  \label{tab:baseline}
+  \begin{tabular}{ l | r r | r r | r r }
+    & \multicolumn{2}{c}{provided} & \multicolumn{2}{c}{dist} & \multicolumn{2}{c}{most} \\
+    \hline
+    \# & acc & f-1 & acc & f-1 & acc & f-1 \\
+    2-way & 0.81 & 0.80 & 0.56 & 0.55 & 0.65 & 0.52 \\
+    6-way & 0.79 & 0.79 & 0.22 & 0.22 & 0.32 & 0.16 \\
+  \end{tabular}
+\end{table}
 
-avg / total       0.81      0.79      0.79      8899
+The provided script appears to perform quite well, but results can be caused by a skewed distribution in the dataset. Table~\ref{tab:ne-cats} shows that this may wel be the case. In order to evaluate the performance I wrote two baseline systems. One system uses the binary distribution of a location and  a non-location labels and labels every third items as a location. Another systems labels every items as a non-location. Similarly for the six-way classification one base-line system labels roughly according to the distribution and one labels all entities as the most common label \emph{GPE}. The performance of the provided system and the baselines are listed in table~\ref{tab:baseline}. The results show that the perceptron performs well compared to the baseline systems.
 
-['LOC'] + (len(Xtest) // 6 + 1) * ['GPE', 'CARDINAL', 'PERSON', 'DATE', 'ORG', 'GPE' ]
+\subsection{Parameter tuning}
 
-Classification accuracy: 0.21833913922912687
-             precision    recall  f1-score   support
+\begin{table}[ht]\footnotesize
+  \caption{results for different perceptron parameter settings}
+  \label{tab:param}
+  \begin{tabular}{llrrrr}
+    learning   & penalty    & iter & type & f1   & acc  \\
+    \hline
+    constant   & none       & 5    & 2    & 0.80 & 0.81 \\
+    constant   & none       & 5    & 6    & 0.79 & 0.79 \\
+    constant   & none       & 10   & 2    & \textbf{0.91} & \textbf{0.91} \\
+    constant   & none       & 10   & 6    & 0.77 & 0.76 \\
+    constant   & none       & 25   & 2    & 0.88 & 0.88 \\
+    constant   & none       & 25   & 6    & 0.76 & 0.76 \\
+    \cline{2-6}
+    constant   & l2         & 5    & 2    & 0.88 & 0.88 \\
+    constant   & l2         & 5    & 6    & 0.76 & 0.76 \\
+    constant   & l2         & 10   & 2    & 0.87 & 0.87 \\
+    \cline{2-6}
+    constant   & l1         & 5    & 2    & 0.88 & 0.88 \\
+    constant   & l1         & 5    & 6    & 0.78 & 0.78 \\
+    constant   & l1         & 10   & 2    & 0.90 & 0.90 \\
+    constant   & l1         & 25   & 2    & 0.81 & 0.83 \\
+    \cline{2-6}
+    constant   & elasticnet & 5    & 2    & 0.78 & 0.78 \\
+    constant   & elasticnet & 5    & 6    & 0.67 & 0.66 \\
+    \hline
+    optimal    & none       & 5    & 2    & 0.90 & 0.90 \\
+    optimal    & none       & 5    & 6    & 0.79 & 0.79 \\
+    optimal    & none       & 10   & 2    & 0.72 & 0.76 \\
+    \cline{2-6}
+    optimal    & l1         & 5    & 2    & 0.82 & 0.83 \\
+    optimal    & l1         & 5    & 6    & 0.62 & 0.62 \\
+    optimal    & l1         & 10   & 2    & \textbf{0.91} & \textbf{0.91} \\
+    optimal    & l1         & 25   & 2    & 0.88 & 0.88 \\
+    \hline
+    invscaling & none       & 5    & 2    & \textbf{0.91} & \textbf{0.91} \\
+    invscaling & none       & 5    & 6    & 0.78 & 0.77 \\
+    invscaling & none       & 10   & 2    & 0.74 & 0.76 \\
+    \cline{2-6}
+    invscaling & l1         & 5    & 6    & \textbf{0.80} & \textbf{0.80} \\
+    invsclaing & l1         & 5    & 2    & 0.86 & 0.86 \\
+    invscaling & l1         & 10   & 2    & 0.86 & 0.86 \\
+    invsclaing & l1         & 25   & 2    & 0.89 & 0.89 \\
+    invsclaing & l1         & 50   & 2    & 0.89 & 0.89 \\
+    invscaling & l1         & 50   & 6    & 0.76 & 0.76 \\
+    invscaling & l1         & 25   & 6    & 0.76 & 0.75 \\
+    invscaling & l1         & 10   & 6    & 0.72 & 0.72 \\
+  \end{tabular}
+\end{table}
 
-   CARDINAL       0.15      0.17      0.16      1311
-       DATE       0.11      0.16      0.13      1017
-        GPE       0.33      0.34      0.33      2915
-        LOC       0.00      0.00      0.00       177
-        ORG       0.23      0.16      0.19      2072
-     PERSON       0.17      0.17      0.17      1407
+I ran the experiments with different settings for the learning rate, penalty and number of iterations. The accuracy and f-1 scores for the configurations are listed in tabel~\ref{tab:param}. The parameters influence how the perceptron weights are adjusted. The learning rate can be constant throughout the training or it can decrease in proportion to the length of training or according to local optima. The penalty parameter provides a means of defining what if any regularisation is performed. Regularisation penalises complexity and improves generalisation. The number of iterations determines how many times the learning algorithm goes through the training set.
 
-avg / total       0.22      0.22      0.22      8899
+These three factors learning rate, regularisation and number of iterations are related and it is hard to isolate the influence of any one of them. The results in table~\ref{tab:param} do show that the binary classification is easier in general. For six-way categorisation there a several combinations that perform within 1\% difference from the the highest score of 80\% for both accuracy and f-1. For the binary task there are three different combinations performing the same at 91\%. These combinations have no clear advantageous setting in common.
 
-all as GPE
-Classification accuracy: 0.32756489493201485
-/usr/local/lib/python3.6/site-packages/sklearn/metrics/classification.py:1113: UndefinedMetricWarning: Precision and F-score are ill-defined and being set to 0.0 in labels with no predicted samples.
-  'precision', 'predicted', average, warn_for)
-             precision    recall  f1-score   support
-
-   CARDINAL       0.00      0.00      0.00      1311
-       DATE       0.00      0.00      0.00      1017
-        GPE       0.33      1.00      0.49      2915
-        LOC       0.00      0.00      0.00       177
-        ORG       0.00      0.00      0.00      2072
-     PERSON       0.00      0.00      0.00      1407
-
-avg / total       0.11      0.33      0.16      8899
-
-4.2.2
-
-lr      pen   type  f1  acc
-constant    none        5   2     0.80  0.81
-constant    none        5   6     0.79  0.79
-constant    l2          5   2     0.88  0.88
-constant    l2          5   6     0.76  0.76
-constant    l1          5   2     0.88  0.88
-constant    l1          5   6     0.78  0.78
-constant    elasticnet  5   2     0.78  0.78
-constant    elasticnet  5   6     0.67  0.66
-optimal     none        5   2     0.90  0.90
-optimal     none        5   6     0.79  0.79
-optimal     l1          5   2     0.82  0.83
-optimal     l1          5   6     0.62  0.62
-invscaling  none        5   2     0.91  0.91
-invscaling  none        5   6     0.78  0.77
-invscaling  l1          5   6     0.80  0.80
-invsclaing  l1          5   2     0.86  0.86
-invscaling  none        10  2     0.74  0.76
-constant    none        10  2     0.91  0.91
-constant    none        10  6     0.77  0.76
-constant    none        25  2     0.88  0.88
-constant    none        25  6     0.76  0.76
-optimal     none        10  2     0.72  0.76
-constant    l1          10  2     0.90  0.90
-constant    l1          25  2     0.81  0.83
-constant    l2          10  2     0.87  0.87
-optimal     l1          10  2     0.91  0.91
-optimal     l1          25  2     0.88  0.88
-invscaling  l1          10  2     0.86  0.86
-invsclaing  l1          25  2     0.89  0.89
-invsclaing  l1          50  2     0.89  0.89
-invscaling  l1          50  6     0.76  0.76
-invscaling  l1          25  6     0.76  0.75
-invscaling  l1          10  6     0.72  0.72
-
-4.2.3
+\subsection{Evaluation}
 
 \begin{table}[ht]\footnotesize
 \caption{test cases for generalisation}
@@ -229,269 +215,22 @@ Roosevelt & PERSON & Truman, Nixon, Eisenhower \\
 \end{tabular}
 \end{table}
 
-All three test cases for generalisation were correctly classified.
-
-4.2.4
-
-\begin{table}[ht]\footnotesize
-\caption{counts of topic and sentiment labels}
-\label{tab:corpus}
-\begin{tabular}{ r r r r r r r }
-act/pred & CARD & DATE &  GPE & LOC & ORG  & PERSON \\
-\hline
-  CARD   & 1178 &    1 &   10 &   2 &  115 &      5 \\
-  DATE   &   46 &  664 &    1 &   0 &  306 &      0 \\
-   GPE   &    3 &    1 & 2283 &  50 &  528 &     50 \\
-   LOC   &    1 &    0 &    6 & 147 &   17 &      6 \\
-   ORG   &   42 &   24 &  232 &  49 & 1476 &    249 \\
-PERSON   &   18 &    4 &  107 &  21 &  236 &   1021 \\
-\end{tabular}
-\end{table}
-
-  CARD out of 1311 cardinal 115 0.09 are predicted as org. 133 0.10
-  DATE out of 1017 date 46 0.05 are card and 306 0.30 are org. tot 353 0.35
-   GPE out of 2915 GPE 50 0.02 are loc, 528 0.18 are org and 50 0.02 are person tot 632 0.22
-   LOC out of 177 loc 6 0.03 are gpe or person and 17 0.10 are ORG 30 0.17
-   ORG out of 2072 org are 42 card 0.02, 24 0.01 date, 232 gpe 0.11, 49 0.02 loc and 249 0.12 person tot 596 0.28
-PERSON out of 1407 pers are 18 0.01 card, 107 0.07 gpe, 21 0.01 loc, 236 0.17 org. tot 386 0.27
-
-Both cardinals and dates are often mistakenly classified as organisations, 9 and 30 percent respectively. The same goes for geopolitical entities and persons, 18 and 17 percent. Organisations on the other hand are mistakenly classified as persons or geopolitical entities, 12 and 11 percent, but not as cardinals or dates, 2 and 1 percent. Persons are also mistakenly classified as geopolitical entities, 7 percent of the persons.
-
-
-
-
-
-linear classifier location in vectorspace
-
-\section{Data}
-
-The study uses a corpus of six thousand product reviews. Each review consists of a label indicating whether the review is positive or negative and a label indicating to which of the followings six topics it belongs: books, camera, dvd, health, music or software. The review also contains a file reference and the actual text of the review. The topic and sentiment labels are distributed almost equally across the corpus. About half of the reviews about a particular topic are labeled positive. Table~\ref{tab:corpus} shows the counts for the labels in the corpus.
-
 \begin{table}[ht]\footnotesize
 \caption{counts of topic and sentiment labels}
 \label{tab:corpus}
 \begin{tabular}{ l r r r r r r }
-topic & cnt & \% & pos & \% & neg & \% \\
+ & card & date &  gpe & loc & org  & person \\
 \hline
-books & 993 & 16.5 & 471 & 47 & 522 & 53 \\
-music & 1027 & 17.1 & 531 & 52 & 496 & 48 \\
-dvd & 1012 & 16.9 & 490 & 48 & 522 & 52 \\
-health & 986 & 16.4 & 470 & 48 & 516 & 52 \\
-software & 994 & 16.6 & 502 & 51 & 492 & 49 \\
-camera & 988 & 16.5 & 504 & 51 & 484 & 49 \\
-\hline
-total & 6000 & 100.0 & 2968 & 48 & 3132 & 52 \\
-\end{tabular}
-
-\end{table}
-
-I also use a subset of the Reuters Corpus Volume 1. It was created by Zhi Liu (National Engineering Research Center for E-Learning, Hubei Wuhan, China). The top 50 authors (with respect to total size of articles) were selected, and for each of them 50 articles were picked that have at least one subtopic of the class CCAT(corporate/industrial). This is a way to minimise the topic factor in distinguishing among the texts. The training corpus consists of 2,500 texts (50 per author); the test corpus also includes 2,500 texts (50 per author), non-overlapping with the training texts.
-
-\section{K-Means}
-
-K-Means is an unsupervised machine learning algorithm to cluster similar samples together in a vector space. I run the algorithm on the review data with the \emph{k}-value equal to 6 to evaluate performance in classifying the reviews by topic. I experiment with changing the number of times the algorithm is run with different seed centroids. I use no preprocessor and the tf-idf vectoriser. Next I run the algorithm on a subset of the review data containing only two topics. I try to steer the outcome of the clustering towards either grouping the topics or the sentiment labels together by using feature selection based on the variance threshold or on selecting the best features with regards to \emph{f}, \emph{$chi^2$} or mutual information measures. Thirdly I run the clustering algorithm on the author data to try and cluster the texts from the same author together. I try different combinations of word and character n-gram vector representations as well as part of speech tags. Performance of the clustering will be evaluated on Rand Index and V-Measure scores using four-fold cross-validation. For the author clustering task I evaluate the configuration with the highest score on the unseen test data.
-
-\begin{figure}
-  \caption{plot of Rand Index and V-Measure for different numbers of times the algorithm was run with different centroid seeds}
-  \label{fig:k-seeds}
-\begin{tikzpicture}
-
-	\begin{axis}[
-    title={},
-    xlabel={number of runs with different seeds},
-    ylabel={},
-    xmin=0, xmax=100,
-    ymin=0.04, ymax=0.08,
-    legend pos=north east,
-    ymajorgrids=true,
-    grid style=dashed,
-	]
-  \addplot [
-    only marks,
-    color=blue,
-    mark=square,
-    ] coordinates {
-    (1  , 0.0643)
-    (1  , 0.0512)
-    (1  , 0.0523)
-    (10 , 0.0529)
-    (10 , 0.0727)
-    (20 , 0.0661)
-    (20 , 0.0742)
-    (50 , 0.0384)
-    (50 , 0.0707)
-    (100, 0.0463)
-    (100, 0.0468)
-  };
-  \addlegendentry{Rand Index}
-
-	\addplot [
-    only marks,
-    color=red,
-    mark=triangle,
-    ] coordinates {
-    (1  , 0.0636)
-    (1  , 0.0498)
-    (1  , 0.0491)
-    (10 , 0.0511)
-    (10 , 0.0702)
-    (20 , 0.0631)
-    (20 , 0.0724)
-    (50 , 0.0373)
-    (50 , 0.0684)
-    (100, 0.0442)
-    (100, 0.0454)
-	};
-	\addlegendentry{v-measure}
-	\end{axis}
-\end{tikzpicture}
-\end{figure}
-
-Figure~\ref{fig:k-seeds} plots the Rand Indices and V-Measures for different numbers of runs of the k-means algorithm on the review data with \emph{k} equals 6 and evaluation against the topic labels. Each run the algorithm is initialised with different seed centroids that the samples cluster around. The run with the lowest resulting inertia, inter-cluster sum of squares, is selected as the best run. I expected a higher number of runs to result in a clustering with higher scores. For different runs of the experiment with identical settings the resulting scores vary to a similar extend as between experiments run with a different number of seedings. Therefore I can only conclude that the clustering is unstable. In general both the Rand Index and V-Measure show that most reviews are in the wrong cluster and that clusters contain many reviews that have a label different from the one assigned to the cluster. Comparing the golden labels of the reviews assigned to a particular cluster confirms this as well.
-
-\begin{table}[ht]\footnotesize
-\centering
-\caption{scores for feature selection in clustering topic or sentiment}
-\label{tab:clust-select}
-\begin{tabular}{ l r r }
-selector & RI topic & RI sentiment \\
-\hline
-none           & 0.0965 & 0.0006 \\
-variance 0     & 0.0288 & 0.0003 \\
-variance 1e-6  & 0.0231 & 0.0002 \\
-10  best F     & 0.4904 & 0.0205 \\
-10  best MI    & 0.0561 & 0.0002 \\
-10  best Chi2  & 0.0104 & 0.0000 \\
-100 best F     & 0.0106 & 0.0017 \\
-100 best MI    & 0.0141 & 0.0006 \\
-100 best Chi2  & 0.0369 & 0.0005 \\
+  card   & 1178 &    1 &   10 &   2 &  115 &      5 \\
+  date   &   46 &  664 &    1 &   0 &  306 &      0 \\
+   gpe   &    3 &    1 & 2283 &  50 &  528 &     50 \\
+   loc   &    1 &    0 &    6 & 147 &   17 &      6 \\
+   org   &   42 &   24 &  232 &  49 & 1476 &    249 \\
+person   &   18 &    4 &  107 &  21 &  236 &   1021 \\
 \end{tabular}
 \end{table}
 
-Next I take a subset of the review data that contains only reviews of cameras and of music. With the number of clusters set to two I try to steer the clustering towards either clustering the reviews with a positive or negative sentiment together or clustering the reviews about cameras or about music together. My assumption is that sentiment is conveyed by less specific words than topic. Selecting features based on various tests related to variance could influence the clustering. I try setting a variance threshold of \emph{1e-5} and \emph{1e-6} and I try selecting the k-best features for \emph{k} equal to \emph{5, 10, 20, 50, 100, 250} based on \emph{ANOVA F-value}, \emph{$chi^2$ statistics} and on \emph{Mutual Information}. The scores for evaluating on the topic labels continue to be much higher than on the sentiment labels. Some of the resulting scores can be found in table~\ref{tab:clust-select}. Selecting features tends to increase the difference in scoring. This somewhat supports the assumption. Because the clustering is already greatly in favour of the topic labels it does not help me in steering the clustering towards the sentiment labels.
-
-\begin{table}[ht]\footnotesize
-\centering
-\caption{scores for author clustering for different features}
-\label{tab:authors}
-\begin{tabular}{ l r r }
-features & RI & V-measure \\
-\hline
-word \{n=1,2\}            & 0.6633 & 0.5755 \\
-word \{n=1,2\}            & 0.6725 & 0.5687 \\
-word \{n=1,2\} + char \{n=5\} & 0.6511 & 0.5685 \\
-word \{n=1,2\} + POS      & 0.5703 & 0.5325 \\
-char \{n=5\}              & 0.6554 & 0.5691 \\
-word \{n=1,2,3\} lemma    & 0.6614 & 0.5712 \\
-word \{n=1,2,3\} stemmed  & 0.6435 & 0.5663 \\
-word \{n=3\}              & 0.6520 & 0.5685 \\
-\end{tabular}
-\end{table}
-
-The last set of experiments with k-means clustering uses the author corpus described in the data section of this report. There are fifty authors and therefore the number of clusters is set to fifty. I vary the features used by the algorithm. I use tf-idf vectors with word n-grams, character n-grams and part-of-speech labels. I list the Rand Index and V-Measure scores for cross-validation on the development data in table~\ref{tab:authors}. The differences between the various n-gram features are small and including the part-of-speech tags has a negative impact. Also here the clustering is not stable and it is hard to draw any conclusions from this data. The word uni+bigram is fastest and it seems to score slightly higher. I evaluate it on the test data to find a Rand Index of \textbf{0.7011} and a V-Measure of \textbf{0.5854}.
-
-\section{Support Vector Machines}
-
-I use a SVM to perform binary classification of the review data into reviews with a positive or negative sentiment. I evaluate the influence of the soft-margin constant \emph{C} and use both a linear and a radial basis kernel function. For the radial basis kernel function I evaluate different values for \emph{$\gamma$}, the inverse of how far the influence of a sample selected as a support vector reaches. I next try to find the best performance by evaluating different combinations of features including clustering based features. Performance is evaluated on the f1-score of the classification using four-fold cross-validation.
-
-\begin{figure}
-  \caption{f1-scores for differenct c-values}
-  \label{fig:c-val}
-\begin{tikzpicture}
-
-	\begin{axis}[
-    title={},
-    xlabel={c-value},
-    ylabel={},
-    xmin=0.5, xmax=2.0,
-    ymin=0.800, ymax=0.820,
-    legend pos=north east,
-    ymajorgrids=true,
-    grid style=dashed,
-    yticklabel style={/pgf/number format/precision=3},
-	]
-  \addplot [
-    color=blue,
-    mark=square,
-    ] coordinates {
-      (0.5, 0.8073)
-      (0.7, 0.8097)
-      (0.8, 0.8123)
-      (0.9, 0.8125)
-      (1.0, 0.8123)
-      (1.1, 0.8130)
-      (1.2, 0.8137)
-      (1.3, 0.8105)
-      (2.0, 0.8042)
-    };
-\addlegendentry{f1-score}
-\end{axis}
-\end{tikzpicture}
-\end{figure}
-
-The c-value, the soft margin constant, determines the error penalty for samples that are close to the separating hyperplane. If the c-value is higher the SVM optimisation will choose a smaller margin to classify samples correctly. But if the margin is smaller the chance that new data is misclassified is greater. However I do not observe a accuracy-recall trade-off. Figure~\ref{fig:c-val} plots the f1-score for c-values around the default value of 1.0. A c-value of \textbf{1.2} scores the highest.
-
-\begin{figure}
-  \caption{f1-scores for $\gamma$ values for a rbf kernel and a c-value of 1.0}
-  \label{fig:gamma}
-\begin{tikzpicture}
-
-	\begin{axis}[
-    title={},
-    xlabel={c-value},
-    ylabel={},
-    xmin=0.4, xmax=2.0,
-    ymin=0.790, ymax=0.820,
-    legend pos=north east,
-    ymajorgrids=true,
-    grid style=dashed,
-    yticklabel style={/pgf/number format/precision=3},
-	]
-  \addplot [
-    color=blue,
-    mark=square,
-    ] coordinates {
-      (0.5, 0.8092)
-      (0.7, 0.8103)
-      (1.0, 0.8098)
-      (2.0, 0.7930)
-    };
-\addlegendentry{f1-score}
-\end{axis}
-\end{tikzpicture}
-\end{figure}
-
-Linear kernels are supposed to work best for text classification tasks. However when I run the SVM algorithm with a radial basis function kernel it performs as well as with the linear kernel. I investigate the influence of the kernel coefficient $\gamma$. This coefficient determines the sensitivity of the optimisation to differences in input vectors. The precise impact is dependent on dimensionality and normalisation. Figure~\ref{fig:gamma} shows the impact of tuning the $\gamma$-value with the c-value set to 1.0. Tuning the c-value together with the $\gamma$-value leads to a maximum f1-score of \textbf{0.8153} at a c-value of \textbf{1.4} and a $\gamma$-value of \textbf{0.9}.
-
-To find the best performing SVM classifier I experiment with the features. A count vector does not perform well and I use tf-idf vectors. Lemmatisation or stemming does not improve performance and neither does adding the part-of-speech tags. I try different word and character n-grams and find that character n-grams work best at 6 characters across word boundaries. Moving back to a linear kernel with a c-value of 0.9 improves the f1-score even further. Lastly I include the labels from a k-means clustering using uni- and bigrams to reach a score of \textbf{0.8531}. Table~\ref{tab:svm-feat} shows the result of some of the features I try.
-
-\begin{table}[ht]\footnotesize
-\centering
-\caption{scores for sentiment clustering using SVM for different features}
-\label{tab:svm-feat}
-\begin{tabular}{ l l r }
-kernel & features & f1-score \\
-\hline
-rbf    &  word \{n=1,2\}            & 0.8188 \\
-rbf    &  word \{n=2\}              & 0.7643 \\
-rbf    &  word \{n=1,2,3\}          & 0.8077 \\
-rbf    &  word \{n=3\}              & 0.6703 \\
-rbf    &  char \{n=3\}              & 0.8178 \\
-rbf    &  char \{n=3,4,5\}          & 0.8410 \\
-rbf    &  char \{n=5\}              & 0.8482 \\
-rbf    &  char \{n=6\}              & 0.8513 \\
-linear &  char \{n=6\}              & 0.8525 \\
-linear &  char\_wb \{n=6\}           & 0.8270 \\
-linear &  char \{n=6\} + POS        & 0.8525 \\
-linear &  char \{n=6\} + Clustering & 0.8531 \\
-\end{tabular}
-\end{table}
-
-\section{Discussion/Conclusion}
-
-I investigate a supervised and an unsupervised method for classifying text. K-Means, the unsupervised method, does not perform well. I can make two observations. The author classification task that uses a lot more text performs better than the review classification task. Yet, and seemingly in contradiction to the first observation, performance peaks for the binary review classification when using only the ten best features based on an ANOVA measure. The clustering is unstable and it is hard to draw any conclusions about the factors determining performance for these tasks.
-
-The support vector machine performs much better. I find two results striking. The first is that while linear separation is considered to be more appropriate for text classification due to the high number of features, the radial basis function does just as well. Secondly, although I cannot imagine what language feature it represents, the large, 6, character n-gram works very well. On the other hand, as in previous machine learning experiments I did, the differences are very small, less then half a percent, and significance is an issue. In general I do not find that more features makes for better classification.
+I checked the classification of unseen names that are similar to ones in the data. Table~\ref{tab:generalisation} show the tests. They were all classified correctly and this indicates that the classifier might generalised well. However the accuracy and f-1 scores show large portion of misclassifications. Table~\ref{tab:corpus} shows the confusion matrix for the six-way classification. Both cardinals and dates are often mistakenly classified as organisations, 9 and 30 percent respectively. The same goes for geopolitical entities and persons, 18 and 17 percent. Organisations on the other hand are mistakenly classified as persons or geopolitical entities, 12 and 11 percent, but not as cardinals or dates, 2 and 1 percent. Persons are also mistakenly classified as geopolitical entities, 7 percent of the persons. The perceptron is a linear classifier and this can explain some of the misclassifications as organisation names occur in many contexts.
 
 \bibliography{eacl2017}
 \bibliography{yourbibfile}

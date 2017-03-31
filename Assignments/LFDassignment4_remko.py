@@ -3,6 +3,8 @@ from sys import argv
 from sklearn.linear_model import Perceptron, SGDClassifier
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
+
+
 # Read in the NE data, with either 2 or 6 classes
 def read_corpus(corpus_file, binary_classes):
     print('Reading in data from {0}...'.format(corpus_file))
