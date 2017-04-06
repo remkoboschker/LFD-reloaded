@@ -28,6 +28,10 @@ class MeanEmbeddingVectorizer(object):
         return self
 
     def transform(self, X):
+        # for words in X:
+        #     for w in words:
+        #         if w in self.word2vec:
+        #             print(len(self.word2vec[w]))
         return numpy.array([
             numpy.mean([self.word2vec[w] for w in words if w in self.word2vec]
                     or [numpy.zeros(self.dim)], axis=0)
@@ -90,19 +94,22 @@ def parse_author_file(file):
 
 def load_language(language_dir):
     language = {}
+    print('loading language from {}'.format(language_dir.name))
     for author_file in language_dir.iterdir():
         if author_file.is_file() and author_file.suffix == '.xml':
             language[author_file.stem] = parse_author_file(author_file)
+    print('done loading language')
     return language
 
 def load_labels(language_dir):
     labels = {}
     file_path = language_dir.joinpath('truth.txt')
+    print('loading labels from {}'.format(language_dir.name))
     with open(file_path, encoding='utf-8') as f:
         for line in f:
             match = labelRegex.match(line)
             labels[match.group(1)] = match.group(2,3)
-    # print(labels)
+    print('done loading labels')
     return labels
 
 # def iterate_dirs(path, load):
@@ -113,13 +120,15 @@ def load_labels(language_dir):
 #             data[directory.name] = load(directory)
 #     return data
 
-def match_text_annotation(texts, annotation,l):
+def match_text_annotation(texts, annotation):
     docs = []
-    labels = []
+    labels_gender = []
+    labels_age = []
     for k, v in texts.items():
         docs.append(v)
-        labels.append(annotation[k][l])
-    return docs, labels
+        labels_gender.append(annotation[k][0])
+        labels_age.append(annotation[k][1])
+    return docs, labels_gender, labels_age
 
 def concat(doc):
     return reduce(lambda acc, val: '{} {}'.format(acc, val), doc)
@@ -130,26 +139,32 @@ def seq_tag(doc):
     return [e for l in pos_tag(doc) for e in l]
 
 # Read in word embeddings
-def read_embeddings(directory):
+def read_embeddings(directory, vocab):
     for file in directory.iterdir():
-        if file.is_file() and file.suffix == '.txt' and file.stem != 'truth':
+        if file.is_file() and (file.suffix == '.txt' or file.suffix == '.vec' or file.suffix == '.vecs') and file.stem != 'truth':
             print('reading embeddings from {}'.format(file.name))
             with open(file, "rb") as lines:
-                embeddings = {
-                    line.split()[0]: numpy.array(map(float, line.split()[1:]))
-                       for line in lines}
+                embeddings = {line.split()[0].decode('utf-8', 'ignore'): numpy.array(list(map(float, line.split()[1:])))
+                    for line in lines if line.split()[0].decode('utf-8', 'ignore') in vocab }
+            not_in_embeddings = len([x for x in vocab if x not in embeddings])
+            print('{} in vocab and {} not in embeddings'.format(len(vocab), not_in_embeddings))
             print('done reading embeddings')
     return embeddings
 
+def get_vocab(data):
+    # return a set with all the words in the texts
+    # for all authors in the language
+    return set(reduce(lambda acc, val: acc + val, data.values()))
+
 # Turn words into embeddings, i.e. replace words by their corresponding embeddings
-def document_embeddings(words, embeddings):
-    vectorized_words = []
-    for word in words:
-        try:
-            vectorized_words.append(embeddings[word.lower()])
-        except KeyError:
-            vectorized_words.append(embeddings['UNK'])
-    return numpy.array(vectorized_words)
+# def document_embeddings(words, embeddings):
+#     vectorized_words = []
+#     for word in words:
+#         try:
+#             vectorized_words.append(embeddings[word.lower()])
+#         except KeyError:
+#             vectorized_words.append(embeddings['UNK'])
+#     return numpy.array(vectorized_words)
 
 svc = SVC(
     kernel='linear',
@@ -196,32 +211,32 @@ chargram = TfidfVectorizer(
 
 
 
-def fit_predict_report(
-    training_data,
-    annotation,
-    select_label,
-    embedding_vectorizer
-):
-    documents, labels = match_text_annotation(
-        training_data,
-        annotation,
-        select_label
-    )
-    vec = FeatureUnion([
-        ('wordTrigram', wordTrigram),
-        ('chargram', chargram),
-        # ('posTrigram', posTrigram)
-        # ('embedded', embedded)
-         ('EmbeddingVectorizer', embedding_vectorizer)
-        # ('MeanEmbeddingVectorizer', )
-    ])
+def fit_predict_report(documents, labels, embed, embeddings):
+    print('embedding size {}'.format(len(embeddings)))
+    print('using {}'.format(embed))
+    if embed == 'none':
+        vec = FeatureUnion([
+            ('wordTrigram', wordTrigram),
+            ('chargram', chargram)
+        ])
+    if embed == 'mean':
+        vec = FeatureUnion([
+            ('wordTrigram', wordTrigram),
+            ('chargram', chargram),
+            ('EmbeddingVectorizer', MeanEmbeddingVectorizer(embeddings))
+        ])
+    if embed == 'tfidf':
+        vec = FeatureUnion([
+            ('wordTrigram', wordTrigram),
+            ('chargram', chargram),
+            ('EmbeddingVectorizer', TfidfEmbeddingVectorizer(embeddings))
+        ])
 
     classifier = Pipeline([
         ('vec', vec),
         # ('selector', selector),
         ('cls', svc)
     ])
-
     predictions = cross_val_predict(
         estimator=classifier,
         X=documents,
@@ -237,33 +252,69 @@ def run(lang):
     directory = Path('./training/' + lang)
     training_data = load_language(directory)
     annotation = load_labels(directory)
-    embeddings = read_embeddings(directory)
-    fit_predict_report(
-        training_data,
-        annotation,
-        0,
-        TfidfEmbeddingVectorizer(embeddings)
-    )
-    fit_predict_report(
-        training_data,
-        annotation,
-        1,
-        MeanEmbeddingVectorizer(embeddings)
-    )
+    vocab = get_vocab(training_data)
+    embeddings = read_embeddings(directory, vocab)
+    documents, labels_gender, labels_age = match_text_annotation(training_data,annotation)
+    print('start predict gender for {}'.format(lang))
+    fit_predict_report(documents, labels_gender, 'tfidf', embeddings)
+    if labels_age[1] != 'XX-XX':
+        print('start predict age for {}'.format(lang))
+        fit_predict_report(documents, labels_age, 'mean', embeddings)
+    else:
+        print('no age labels')
 
 run('english')
-run('dutch')
-run('italian')
-run('spanish')
+# run('dutch')
+# run('italian')
+# run('spanish')
 
+# https://github.com/facebookresearch/fastText/blob/master/pretrained-vectors.md
 
-# english none                                      gender  7754
-# english MeanEmbeddingVectorizer embeddings.pickle gender  7757
-# english tfidembeddingvecgtorizer embeddings.pickle gender 7849
+# english none                              gender  7754
+# english tfid glove.twitter.27B.50d.txt    gender 8223
+# english mean glove.twitter.27B.50d.txt    gender 8319
+# english tfid glove.twitter.27B.200d.txt   gender 8503
+# english mean glove.twitter.27B.200d.txt   gender 8505
+# mean fasttext wiki.en.vec 7659 21376 in vocab and 12463 not in embeddings done reading embeddings embedding size 8913
+# tfidf fasttext wiki.en.vec 7944
+# glove.6B.300d.txt mean 7941 21376 in vocab and 12859 not in embeddings done reading embeddings start predict gender for english embedding size 8517
+# glove.6B.300d.txt tfidf 8224
 
-# english none                                      age  6983
-# english MeanEmbeddingVectorizer embeddings.pickle age  7153
-# english tfidembeddingvecgtorizer embeddings.pickle age 6810
+# english none                            age  6983
+# english tfid glove.twitter.27B.50d.txt  age  7180 21376 in vocab and 12468 not in embeddings done reading embeddings emb 8908
+# english mean glove.twitter.27B.50d.txt  age  7213
+# english tfid glove.twitter.27B.200d.txt age  7232
+# english mean glove.twitter.27B.200d.txt age  7259
+# mean fasttext wiki.en.vec 7005
+# tfidf fasttext wiki.en.vec 7343
+# glove.6B.300d.txt tfidf 6996
+# glove.6B.300d.txt mean 7153
+
+# dutch none                          6951
+# https://github.com/clips/dutchembeddings
+# dutch mean combined-320.txt gender 6951 7491 in vocab and 3033 not in embeddings done reading embeddings embedding size 4458
+# dutch mean fasttext wiki.nl.vec     7429 7491 in vocab and 3133 not in embeddings done reading embeddings embedding size 4358
+# dutch tfidf fasttext wiki.nl.vec 7884
+
+# eerst https://github.com/marekrei/convertvec
+# met het bestand /net/shared/rob/nlTweets/tw.vecs
+# mean rob 400d  6951 in vocab and 548 not in embeddings done reading embeddings embedding size 6943
+# tfidf rob 7884
+
+# italian none 8203
+# italian tfidf fasttext wiki.it.vec gender 7823 10425 in vocab and 4487 not in embeddings done reading embeddings embedding size 5938
+# italian mean fasttext wiki.it.vec gender 7823
+# http://hlt.isti.cnr.it/wordembeddings/
+
+# spanish none gender 7842
+# spanish node age 6390
+# spanish tfidf fasttext wiki.es.vec age 7966 20045 in vocab and 8415 not in embeddings done reading embeddings embedding size 11630
+# spanish tfidf fasttext wiki.es.vec gender 7992
+# spanish mean fasttext wiki.es.vec age 6598
+# spanish tfidf fasttext wiki.es.vec gender 8279
+# http://crscardellino.me/SBWCE/
+# SBW-vectors-300-min5.txt mean age 6390 gender 7992;  20045 in vocab and 4264 not in embeddings done reading embeddings start predict gender for spanish embedding size 15781
+# tfidf sbw gender 8279 age 6598
 
 
 # initially I use a lot of features and then try to select the relevenat ones
@@ -284,4 +335,6 @@ run('spanish')
 # I use a SVM with a linear kernel, because participants in the shared task
 # have been succesful with it and I did not do assignment 5 and no little of
 # multi layer neural networks.
+
+# experiment with breadth or depth embeddings vocab vs. dimensions
 

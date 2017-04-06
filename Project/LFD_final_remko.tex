@@ -1,0 +1,186 @@
+ %
+% File lfd1617.tex
+%
+%% Based on the style files for EACL-2017
+%% Based on the style files for ACL-2016
+%% Based on the style files for ACL-2015, with some improvements
+%%  taken from the NAACL-2016 style
+%% Based on the style files for ACL-2014, which were, in turn,
+%% Based on the style files for ACL-2013, which were, in turn,
+%% Based on the style files for ACL-2012, which were, in turn,
+%% based on the style files for ACL-2011, which were, in turn,
+%% based on the style files for ACL-2010, which were, in turn,
+%% based on the style files for ACL-IJCNLP-2009, which were, in turn,
+%% based on the style files for EACL-2009 and IJCNLP-2008...
+
+%% Based on the style files for EACL 2006 by
+%%e.agirre@ehu.es or Sergi.Balari@uab.es
+%% and that of ACL 08 by Joakim Nivre and Noah Smith
+
+\documentclass[11pt]{article}
+\usepackage{eacl2017}
+\usepackage{times}
+\usepackage{url}
+\usepackage{latexsym}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.14}
+
+%%%% LEAVE THIS IN
+\eaclfinalcopy
+
+
+\newcommand\BibTeX{B{\sc ib}\TeX}
+
+
+
+\title{Learning from Data - Final Project - Author Profiling}
+
+\author{Remko Boschker \\
+  master student of information science at the Rijks Universiteit Groningen \\
+  {\tt s1282603, r.boschker@student.rug.nl} }
+
+\date{}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+
+\end{abstract}
+
+\section{Introduction}
+
+\section{Related Work}
+
+Overview of the 4th Author Profiling Task at PAN 2016:
+Cross-Genre Evaluations
+
+\section{Data}
+
+tweets + author profiles
+
+preprocessing
+
+# the tweets are preprocessed:
+# trim whitespace
+# replace retweets by a single RT
+# replace @username with USR
+# replace urls with URL
+# tokenize using the nltk tweettokenizer removing user handles and limiting
+#   repititions to three
+# I leave hashtags and emoticons as they are
+
+Embeddings
+Facebook fasttext pretrained wikipedia vectors 300d
+
+Glove 6B 300d
+Glove 27B twitter 200d
+Rob de Groot dutch twitter 400d
+Clips combined 320d
+
+\begin{table}[ht]
+  \caption{vocabulary size after preprocessing}
+  \label{tab:vocab-size}
+  \begin{tabular}{ l r r c c }
+    language & vocab & #authors & gender & age \\
+    \hline
+    English & 21376 & 107 & x & x \\
+    Dutch   &  7491 &  24 & x & - \\
+    Italian & 10425 &  28 & x & - \\
+    Spanish & 20045 &  70 & x & x \\
+  \end{tabular}
+\end{table}
+
+\section{Method}
+
+\subsection{Pre-processing}
+
+
+\subsection{Features}
+
+http://nadbordrozd.github.io/blog/2016/05/20/text-classification-with-word2vec/
+
+\subsection{Classification}
+
+preprocess
+
+
+
+svm
+
+parameters
+
+10-fold
+
+\section{Results}
+\begin{table*}[ht]
+  \caption{word embeddings used as features}
+  \label{tab:embeddings}
+  \begin{tabular}{ l l l l r r r }
+shortname & name & corpus &language & types & dim. & in vocab & ref \\
+\hline
+GloTwit50/200 & Glove & Twitter & English & 1.2M & 50, 200 & 41.7\% & ~\shortcite{pennington2014glove}\\
+Glove & Glove & mixed & English & 400K & 300 & 39.9\% \\
+FTen & FastText & Wikipedia & English & 2.5M & 300 & 41.7\% \\
+FTnl & FastText & Wikipedia & Dutch & 871K & 300 & 59.5\% \\
+FTit & FastText & Wikipedia & Italian & 871K & 300 & 57.0\% \\
+FTes & FastText & Wikipedia & Spanish & 985K & 300 & 58.0\% \\
+Clips & Clips & mixed & Dutch & 1.4M & 320 & 59.5\% \\
+Rob & Rob & Twitter & Dutch & 5.6M & 400 & 92.7\% \\
+SBWCE & SBWCE & mixed & Spanish 1M & 300 & 78.7\% \\
+\end{tabular}
+\end{table*}
+\section{Discussion}
+
+# https://github.com/facebookresearch/fastText/blob/master/pretrained-vectors.md
+
+# english none                              gender  7754
+# english tfid glove.twitter.27B.50d.txt    gender 8223
+# english mean glove.twitter.27B.50d.txt    gender 8319
+# english tfid glove.twitter.27B.200d.txt   gender 8503
+# english mean glove.twitter.27B.200d.txt   gender 8505
+# mean fasttext wiki.en.vec 7659 21376 in vocab and 12463 not in embeddings done reading embeddings embedding size 8913
+# tfidf fasttext wiki.en.vec 7944
+# glove.6B.300d.txt mean 7941 21376 in vocab and 12859 not in embeddings done reading embeddings start predict gender for english embedding size 8517
+# glove.6B.300d.txt tfidf 8224
+
+# english none                            age  6983
+# english tfid glove.twitter.27B.50d.txt  age  7180 21376 in vocab and 12468 not in embeddings done reading embeddings emb 8908
+# english mean glove.twitter.27B.50d.txt  age  7213
+# english tfid glove.twitter.27B.200d.txt age  7232
+# english mean glove.twitter.27B.200d.txt age  7259
+# mean fasttext wiki.en.vec 7005
+# tfidf fasttext wiki.en.vec 7343
+# glove.6B.300d.txt tfidf 6996
+# glove.6B.300d.txt mean 7153
+
+# dutch none                          6951
+# https://github.com/clips/dutchembeddings
+# dutch mean combined-320.txt gender 6951 7491 in vocab and 3033 not in embeddings done reading embeddings embedding size 4458
+# dutch mean fasttext wiki.nl.vec     7429 7491 in vocab and 3133 not in embeddings done reading embeddings embedding size 4358
+# dutch tfidf fasttext wiki.nl.vec 7884
+
+# eerst https://github.com/marekrei/convertvec
+# met het bestand /net/shared/rob/nlTweets/tw.vecs
+# mean rob 400d  6951 in vocab and 548 not in embeddings done reading embeddings embedding size 6943
+# tfidf rob 7884
+
+# italian none 8203
+# italian tfidf fasttext wiki.it.vec gender 7823 10425 in vocab and 4487 not in embeddings done reading embeddings embedding size 5938
+# italian mean fasttext wiki.it.vec gender 7823
+# http://hlt.isti.cnr.it/wordembeddings/
+
+# spanish none gender 7842
+# spanish node age 6390
+# spanish tfidf fasttext wiki.es.vec age 7966 20045 in vocab and 8415 not in embeddings done reading embeddings embedding size 11630
+# spanish tfidf fasttext wiki.es.vec gender 7992
+# spanish mean fasttext wiki.es.vec age 6598
+# spanish tfidf fasttext wiki.es.vec gender 8279
+# http://crscardellino.me/SBWCE/
+# SBW-vectors-300-min5.txt mean age 6390 gender 7992;  20045 in vocab and 4264 not in embeddings done reading embeddings start predict gender for spanish embedding size 15781
+# tfidf sbw gender 8279 age 6598
+
+\bibliography{eacl2017}
+\bibliography{bibliography}
+
+\end{document}
