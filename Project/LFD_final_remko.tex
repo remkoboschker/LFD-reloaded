@@ -46,43 +46,25 @@
 \maketitle
 \begin{abstract}
 
+  This study investigates author profiling in multiple languages based on Tweets. It does so by predicting the gender and age category of the author of a set of Tweets. It uses a support vector machine with a language model of the authored text. It aims to find out if word-embeddings are a worthwhile addition to a n-gram language model and what kind of embeddings works best. The study finds that using word-embeddings as an additional feature for a SVM generally improves the performance and that embeddings trained on a very large corpus similar to the training data works best.
+
 \end{abstract}
 
 \section{Introduction}
 
-\section{Related Work}
+As more and more text produced by private persons becomes available online in the form social media and weblogs being able to infer who wrote a text becomes increasingly interesting for marketing, forensics and security. Inferring who exactly wrote a text might be very hard, but inferring to what categories an author belongs is possible by analysing the language of a text. This inference taks is called author profiling and it is the focus of the PAN shared tasks \cite{rangel2016overview}.
 
-Overview of the 4th Author Profiling Task at PAN 2016:
-Cross-Genre Evaluations
+Similar to the PAN 2016 shared task this study uses Tweets in multiple languages to predict the gender and age category of its author. In contrast to the shared task this study does not look at cross-genre classification, but it uses Tweets in both training and test data. The predictions are based on a language model of the text produced by the author using a machine learning algorithm. This study aims to investigate if word-embeddings form an effective addition to n-grams language models in this task.
 
 \section{Data}
 
-tweets + author profiles
-
-preprocessing
-
-# the tweets are preprocessed:
-# trim whitespace
-# replace retweets by a single RT
-# replace @username with USR
-# replace urls with URL
-# tokenize using the nltk tweettokenizer removing user handles and limiting
-#   repititions to three
-# I leave hashtags and emoticons as they are
-
-Embeddings
-Facebook fasttext pretrained wikipedia vectors 300d
-
-Glove 6B 300d
-Glove 27B twitter 200d
-Rob de Groot dutch twitter 400d
-Clips combined 320d
-
 \begin{table}[ht]
-  \caption{vocabulary size after preprocessing}
+  \caption{training data}
   \label{tab:vocab-size}
   \begin{tabular}{ l r r c c }
-    language & vocab & #authors & gender & age \\
+    & & & \multicolumn{2}{c}{gold labels} \\
+    \cline{4-5}
+    language & vocab & authors & gender & age \\
     \hline
     English & 21376 & 107 & x & x \\
     Dutch   &  7491 &  24 & x & - \\
@@ -91,96 +73,91 @@ Clips combined 320d
   \end{tabular}
 \end{table}
 
+The training data for the author classification task consists of four collections of authors with hundred of their Tweets in a particular language. There are collections for English, Dutch, Italian and Spanish. For each collection there is also a file containing gold labels for the gender and age group of each author. The age labels for Dutch and Italian are not available. The gender is annotated as either male or female. The age groups are 18-24, 25-34, 35-49 and 50-XX. Table \ref{tab:vocab-size} shows an overview of the number of authors for each language and the size of the vocabulary used in all the tweets combined after a pre-processing step which will be explained in the next section. There seems to be a strong correlation between the number of authors (and therefore the number of Tweets) and the vocabulary size.
+
 \section{Method}
+
+I go about the author classification by first pre-processing the Tweets of each author and joining them into one long text. I represent the word trigrams, the character six-grams and the word-embeddings of the words in the text in a feature vector. I use the feature vector in a support vector machine to do the classifications into gender- and age-category. I perform parameter tuning using an automated grid search and evaluate the result using ten-fold cross-validation.
 
 \subsection{Pre-processing}
 
+I concatenate all the Tweets of a user together as the text to train the classifier on. For each Tweet I trim the whitespace, replace retweets by a single RT, replace @username with USR and replace urls with URL. The Tweets are tokenised using the NLTK \cite{bird2009natural} TweetTokenizer. In addition to the preprocessing already done this tokenisation also limits the repetition of characters to three. I leave hashtags and emoticons as they are and add STA to the beginning of the Tweet and END to the end.
+
+I choose to do this particular preprocessing to eliminate content not originating from the author, retweets, and content that is overly specific such as urls and usernames. I considered performing lemmatisation or stemming, but Rangel et al. \shortcite{rangel2016overview} reports little or no benefit and I have the same experience in previous experiments. I did try to filter out the stop words for the English corpus, but found that performance degraded. However with the whole system in place these choices could be revisited.
 
 \subsection{Features}
 
-http://nadbordrozd.github.io/blog/2016/05/20/text-classification-with-word2vec/
+Rangel et al. \shortcite{rangel2016overview} discusses many different features being used such as the use of slang, vocabulary richness and different grammatical statistics.
+Although the PAN 2016 task focusses on cross-genre classification and the results can not be compared with the results obtained in this study preliminary evaluation of using n-gram models showed a comparatively good result. I decided to work out the performance using n-gram models first. After a few trials evaluating on the f1 score using cross-validation for the available languages I found that using both word trigrams and character six-grams shows the best performance.
+
+\begin{table*}[ht]
+  \centering
+  \caption{word-embeddings used as features}
+  \label{tab:embeddings}
+  \begin{tabular}{ l l l r r r l }
+shortname & corpus &language & types & dim. & in vocab & reference \\
+\hline
+GloTwit50/200 & Twitter & English & 1.2M & 50, 200 & 41.7\% & ~\cite{pennington2014glove}\\
+Glove & mixed & English & 400K & 300 & 39.9\% & ~\cite{pennington2014glove}\\
+FTen  & Wikipedia & English & 2.5M & 300 & 41.7\% & ~\cite{bojanowski2016enriching}\\
+FTnl  & Wikipedia & Dutch & 871K & 300 & 59.5\% & ~\cite{bojanowski2016enriching}\\
+FTit  & Wikipedia & Italian & 871K & 300 & 57.0\% & ~\cite{bojanowski2016enriching}\\
+FTes  & Wikipedia & Spanish & 985K & 300 & 58.0\% & ~\cite{bojanowski2016enriching}\\
+Clips & mixed & Dutch & 1.4M & 320 & 59.5\% & ~\cite{tulkens2016evaluating}\\
+Rob   & Twitter & Dutch & 5.6M & 400 & 92.7\% & ~\cite{rob}\\
+SBWCE & mixed & Spanish & 1M & 300 & 78.7\% & ~\cite{cardellinoSBWCE}\\
+\end{tabular}
+\end{table*}
+
+In addition to n-gram models I later tried using part-of-speech tags as a feature, but found no improvement. Secondly I included word-embedding representation of the words in the text. This did show an improved performance on initial trials and they are included as features in this system. Table \ref{tab:embeddings} shows the different pre-trained word-embeddings I use as features. They cover a range of training corpora, dimensionalities and algorithms used. For Italian I was unable to find suitable data other than embeddings trained on Wikipedia.
+
+I also investigate how much of the words in the training data are actually in the embeddings. In general the larger the number of words in the embeddings the higher the percentage of training data covered. However despite the use of embeddings with a large number of words the coverage of English is much lower than for the other languages. The 5.6 million word Twitter trained word-embedding for Dutch ~\cite{rob} has the highest coverage of the training vocabulary at 92.7 \%.
+
+Besides selecting the embeddings I have to decide how to include them in as a feature. I use the machine learning toolkit Scikit Learn \cite{scikit-learn} and learned from a blog post by Nadbor Drozd ~\cite{nadbordrozd} how to build a vectoriser that can handle word-embeddings. I experiment with a vectoriser that calculates the mean vector of all the word-embedding vectors and with a vectoriser that calculates a weighted mean according to the inverse document frequency of a word (tf-idf).
 
 \subsection{Classification}
 
-preprocess
+I use the Scikit Learn implementation SVC of a support vector machine for both the binary classification into gender and for the four-way classification into age groups. I selected the support vector machine, because it was a successful approach in the PAN 2016 task \cite{rangel2016overview} and it showed promising results in my preliminary study of the task.
 
+To find the best values for the C, $\gamma$ and kernel parameters as well as the best choice of embedding vectoriser I run a parameter grid search. The search evaluates the performance on the f1 score averaged within a class using a five-fold cross-validation. I run the search for no embeddings and for all the different embeddings discussed. For the C value I run the search with the ranges $[0.001, 0.01, .. 100]$ and $[0.01 .. 10]$ for a more fine grained search. I investigate the kernel parameter using \emph{linear} and \emph{rbf}. The latter is evaluated with a $\gamma$ in the range $[1e-5, .., 1e-2]$. The vectoriser of the embeddings has the possible options of \emph{none}, \emph{mean} and \emph{tfidf}.
 
+I find that the best results are always obtained with the linear kernel using a C value of 1.0. There are a few instances where a different C value is returned by the grid search, but the f1-score is no higher at four digits accuracy than a C value of 1.0. Notable exception is the embedding for Dutch by Rob de Groot \shortcite{rob} that performs best with a C value of 2.1. The actual scores for the different languages, embeddings and vectorisations using a ten-fold cross-validation are discussed in the results section.
 
-svm
+\section{Results and Discussion}
 
-parameters
-
-10-fold
-
-\section{Results}
 \begin{table*}[ht]
-  \caption{word embeddings used as features}
-  \label{tab:embeddings}
-  \begin{tabular}{ l l l l r r r }
-shortname & name & corpus &language & types & dim. & in vocab & ref \\
+  \centering
+  \caption{f1 scores for the different embeddings using optimal SVM parameters}
+  \label{tab:results}
+  \begin{tabular}{ l l l r l r}
+        &            & \multicolumn{2}{c}{gender} & \multicolumn{2}{c}{age} \\
+  \cline{3-4} \cline{5-6}
+language    & embeddings & vectorizer  & f1        & vectorizer & f1 \\
 \hline
-GloTwit50/200 & Glove & Twitter & English & 1.2M & 50, 200 & 41.7\% & ~\shortcite{pennington2014glove}\\
-Glove & Glove & mixed & English & 400K & 300 & 39.9\% \\
-FTen & FastText & Wikipedia & English & 2.5M & 300 & 41.7\% \\
-FTnl & FastText & Wikipedia & Dutch & 871K & 300 & 59.5\% \\
-FTit & FastText & Wikipedia & Italian & 871K & 300 & 57.0\% \\
-FTes & FastText & Wikipedia & Spanish & 985K & 300 & 58.0\% \\
-Clips & Clips & mixed & Dutch & 1.4M & 320 & 59.5\% \\
-Rob & Rob & Twitter & Dutch & 5.6M & 400 & 92.7\% \\
-SBWCE & SBWCE & mixed & Spanish 1M & 300 & 78.7\% \\
-\end{tabular}
+English & none       & none        & 0.7754    &  none   & 0.6983 \\
+English & Glove      & tfidf       & 0.8224    &  mean   & 0.7269 \\
+English & GloTwit200 & tfidf       & \textbf{0.8503}    &  tfidf  & 0.7232 \\
+English & GloTwit50  & tfidf       & 0.8223    &  mean   & 0.7213 \\
+English & FTen       & tfidf       & 0.7944    &  tfidf  & \textbf{0.7343} \\
+Dutch   & none       & none        & 0.6951    &  -      & -      \\
+Dutch   & Clips      & mean        & 0.6951    &  -      & -      \\
+Dutch   & Rob        & tfidf       & \textbf{0.8322}    &  -      & -      \\
+Dutch   & FTnl       & mean        & 0.7429    &  -      & -      \\
+Italian & none       & none        & \textbf{0.8203}    &  -      & -      \\
+Italian & FTit       & mean        & 0.7823    &  -      & -      \\
+Spanish & none       & none        & 0.7842    &  none   & 0.6390 \\
+Spanish & SBWCE      & tfidf       & \textbf{0.8279}    &  tfidf  & 0.6598 \\
+Spanish & FTes       & mean        & \textbf{0.8279}    &  tfidf  & \textbf{0.7966} \\
+  \end{tabular}
 \end{table*}
-\section{Discussion}
 
-# https://github.com/facebookresearch/fastText/blob/master/pretrained-vectors.md
+The results for the experiments with different embeddings and vectorisations are listed in table \ref{tab:results}. For English and Dutch the largest embedding with the highest dimensionality trained on a Twitter corpus using a tf-idf vectorisation produces the highest score. For Spanish a corpus trained on Wikipedia performs best using a mean vectorisation for the binary gender classification and a tf-idf vectorisation for the multi-class age group classification.
 
-# english none                              gender  7754
-# english tfid glove.twitter.27B.50d.txt    gender 8223
-# english mean glove.twitter.27B.50d.txt    gender 8319
-# english tfid glove.twitter.27B.200d.txt   gender 8503
-# english mean glove.twitter.27B.200d.txt   gender 8505
-# mean fasttext wiki.en.vec 7659 21376 in vocab and 12463 not in embeddings done reading embeddings embedding size 8913
-# tfidf fasttext wiki.en.vec 7944
-# glove.6B.300d.txt mean 7941 21376 in vocab and 12859 not in embeddings done reading embeddings start predict gender for english embedding size 8517
-# glove.6B.300d.txt tfidf 8224
+The Italian FastText embedding trained on Wikipedia performs worse than using no embedding. Perhaps a larger embedding or an embedding trained on a Twitter corpus would show an improvement over not using word-embeddings. However it is comparable in size and origin to the Spanish one that does work. The main difference between the Italian and Spanish case is the number of Tweets available, 28 versus 70, and this might explain the ineffectiveness. Then again for Dutch the number of Tweets is even smaller, 24, and the FastText Wikipedia embedding shows a significant improvement there. So the Italian case needs some further investigation and perhaps another embedding can be found for comparison.
 
-# english none                            age  6983
-# english tfid glove.twitter.27B.50d.txt  age  7180 21376 in vocab and 12468 not in embeddings done reading embeddings emb 8908
-# english mean glove.twitter.27B.50d.txt  age  7213
-# english tfid glove.twitter.27B.200d.txt age  7232
-# english mean glove.twitter.27B.200d.txt age  7259
-# mean fasttext wiki.en.vec 7005
-# tfidf fasttext wiki.en.vec 7343
-# glove.6B.300d.txt tfidf 6996
-# glove.6B.300d.txt mean 7153
+So in general I think you can make the claim that using word-embeddings as a feature for author classification improves the result. However the best result seems to be obtained using not only an embedding trained on a very large corpus, but also a similar corpus. It is therefore uncertain how much you would gain using a particular embedding for a cross genre classification such as the PAN 2016 shared task. Using a mixed training corpus for the embedding might mitigate this effect. These are questions to be investigated further.
 
-# dutch none                          6951
-# https://github.com/clips/dutchembeddings
-# dutch mean combined-320.txt gender 6951 7491 in vocab and 3033 not in embeddings done reading embeddings embedding size 4458
-# dutch mean fasttext wiki.nl.vec     7429 7491 in vocab and 3133 not in embeddings done reading embeddings embedding size 4358
-# dutch tfidf fasttext wiki.nl.vec 7884
-
-# eerst https://github.com/marekrei/convertvec
-# met het bestand /net/shared/rob/nlTweets/tw.vecs
-# mean rob 400d  6951 in vocab and 548 not in embeddings done reading embeddings embedding size 6943
-# tfidf rob 7884
-
-# italian none 8203
-# italian tfidf fasttext wiki.it.vec gender 7823 10425 in vocab and 4487 not in embeddings done reading embeddings embedding size 5938
-# italian mean fasttext wiki.it.vec gender 7823
-# http://hlt.isti.cnr.it/wordembeddings/
-
-# spanish none gender 7842
-# spanish node age 6390
-# spanish tfidf fasttext wiki.es.vec age 7966 20045 in vocab and 8415 not in embeddings done reading embeddings embedding size 11630
-# spanish tfidf fasttext wiki.es.vec gender 7992
-# spanish mean fasttext wiki.es.vec age 6598
-# spanish tfidf fasttext wiki.es.vec gender 8279
-# http://crscardellino.me/SBWCE/
-# SBW-vectors-300-min5.txt mean age 6390 gender 7992;  20045 in vocab and 4264 not in embeddings done reading embeddings start predict gender for spanish embedding size 15781
-# tfidf sbw gender 8279 age 6598
-
-\bibliography{eacl2017}
-\bibliography{bibliography}
+\bibliographystyle{eacl2017}
+\bibliography{LFD_final_remko}
 
 \end{document}
